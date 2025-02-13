@@ -16,7 +16,7 @@ import yaml
 from pyproj import Transformer
 from tqdm import tqdm
 
-from gp_package.core.base import BaseFunction
+from src.core.base import BaseFunction
 
 #%% Aufgaben
 

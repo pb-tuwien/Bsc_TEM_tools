@@ -12,7 +12,7 @@ import yaml
 from pathlib import Path
 import shutil
 
-from gp_package.core.base import BaseFunction
+from src.core.base import BaseFunction
 
 # %% GPfolder class
 

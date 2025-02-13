@@ -14,7 +14,7 @@ import pandas as pd
 import numpy as np
 from typing import Optional, TextIO
 
-from gp_package.core.base import BaseFunction
+from src.core.base import BaseFunction
 
 # %% GPfile class
 

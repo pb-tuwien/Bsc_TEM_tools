@@ -20,9 +20,9 @@ from pygimli.viewer.mpl import drawModel1D
 from scipy.interpolate import griddata, CubicSpline
 from scipy.optimize import curve_fit #todo: schauen ob man das sinnvoll einbauen kann?? @jakob
 
-from gp_package.core.gp_file import GPfile
-from gp_package.tem.TEM_frwrd.TEM_inv import tem_inv_smooth1D
-from gp_package.framework.survey_base import SurveyBase
+from src.core.gp_file import GPfile
+from src.tem.TEM_frwrd.TEM_inv import tem_inv_smooth1D
+from src.framework.survey_base import SurveyBase
 
 warnings.filterwarnings('ignore')
 
