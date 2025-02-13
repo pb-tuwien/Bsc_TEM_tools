@@ -10,10 +10,9 @@ Created on Sun Nov 03 17:31:37 2024
 from pathlib import Path
 from typing import Optional
 import pandas as pd
-from gp_package.core.base import BaseFunction
-from gp_package.core.gp_coords import GPcoords
-from gp_package.core.gp_folder import GPfolder
-from gp_package.core.gp_config import GPconfig
+from src.core.base import BaseFunction
+from src.core.gp_coords import GPcoords
+from src.core.gp_folder import GPfolder
 
 #%% Aufgaben
 
@@ -29,7 +28,7 @@ class SurveyBase(BaseFunction):
     It gives the user a structured way to handle survey coordinates.
     For handling survey data, the user should go to the daughter classes.
     """
-    def __init__(self, project_dir: [Path, str], dir_structure: [str, dict], create_config: bool = True) -> None:
+    def __init__(self, project_dir: [Path, str], dir_structure: [str, dict]) -> None:
         """
         Initializes the SurveyBase class.
 
@@ -39,8 +38,6 @@ class SurveyBase(BaseFunction):
             The project directory.
         dir_structure : str or dict
             The directory structure of the project directory.
-        create_config : bool, optional
-            If a config file should be created. The default is True.
         """
         self._coordinates_raw = None
         self._coordinates_proc = None
@@ -56,13 +53,6 @@ class SurveyBase(BaseFunction):
         self.logger = self._setup_logger(log_path=self._log_path)
 
         self._gp_coords = GPcoords(log_path=self._log_path)
-
-        if create_config:
-            config_path = self._folder_structure.get('config')
-            if config_path is None:
-                self.logger.warning('No config folder found in the directory structure.')
-            else:
-                self._gp_config = GPconfig(config_path=config_path)
 
     def project_dir(self) -> Path:
         """
@@ -346,5 +336,3 @@ class SurveyBase(BaseFunction):
         self._log_path = None
         self._folder_structure = None
         self._gp_coords = None
-        if hasattr(self, '_gp_config'):
-            self._gp_config = None
