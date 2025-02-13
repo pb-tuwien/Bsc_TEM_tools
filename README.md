@@ -74,6 +74,7 @@ project_directory = 'path/to/project'
 parse_points = {'sounding_name_1': 'coordinate_name', 'sounding_name_2': 'coordinate_name'}
 
 survey = st.SurveyTEM(project_directory)
+survey.coords_read()
 survey.data_read()
 survey.data_preprocess(parsing_dict=parse_points)
 ```

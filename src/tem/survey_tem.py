@@ -15,19 +15,14 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 import matplotlib.pyplot as plt
-# from pandas.conftest import axis_1
 import pygimli.viewer.mpl
 # from scipy.interpolate import griddata, CubicSpline
-# from scipy.optimize import curve_fit #todo: schauen ob man das sinnvoll einbauen kann?? @jakob
 
 from src.core.gp_file import GPfile
 from src.tem.TEM_frwrd.TEM_inv import tem_inv_smooth1D
 from src.framework.survey_base import SurveyBase
 
 warnings.filterwarnings('ignore')
-
-
-#%% Aufgaben
 
 #%% SurveyTEM class
 
@@ -1118,7 +1113,7 @@ class SurveyTEM(SurveyBase):
 
         plt.tight_layout()
         fig.show()
-        target_dir = self._folder_structure.get('data_first_look')
+        target_dir = self._folder_structure.get('data_forward')
         time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         file_name = f'forward_model_{time}_{filter_times[0]}_{filter_times[1]}_{unit}.png' if fname is None else fname
         fig.savefig(target_dir / file_name)
