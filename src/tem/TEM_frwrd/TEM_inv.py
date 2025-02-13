@@ -14,7 +14,7 @@ based upon pygimli example
 import numpy as np
 import pygimli as pg
 
-from gp_package.tem.TEM_frwrd.empymod_frwrd import empymod_frwrd
+from src.tem.TEM_frwrd.empymod_frwrd import empymod_frwrd
 
 
 # %% class_lib
