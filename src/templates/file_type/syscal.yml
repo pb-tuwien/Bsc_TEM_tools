@@ -1,0 +1,11 @@
+config:
+  name: 'syscal'
+  file_suffix: '.dat'
+  start_buffer: 0
+
+template:
+  data:
+    type: 'dataframe'
+    start_with: 'A'
+    delimiter: '\t'
+    column_delimiter: '\t'

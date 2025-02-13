@@ -1,0 +1,33 @@
+config:
+  sep: ','
+  naming_pattern: '([A-Za-z]+)(\d*)_(\d*)'
+  reprojection_key: 'wgs84_utm33n'
+  file_type: 'syscal'
+
+rename_points:
+  'L1': 'Line1'
+  'Point ': 'Line1_'
+  'L4': 'Line2'
+  'L2': 'P1'
+  'L3': 'P2'
+  'L5': 'P3'
+  'L6': 'P4'
+  'IP1': 'P5'
+  'IP2': 'P6'
+  'IP3': 'P7'
+  'IP4': 'P8'
+  'IP5': 'P9'
+  'IP6': 'P10'
+  'IP7': 'P11'
+  'IP8': 'P12'
+  'IP9': 'P13'
+
+roll_along:
+  Line1:
+    length: 2
+    starting_electrode:
+      - 19
+  Line2:
+    length: 2
+    starting_electrode:
+      - 19
