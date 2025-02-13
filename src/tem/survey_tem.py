@@ -10,15 +10,15 @@ Created on Sun Nov 03 19:31:36 2024
 from pathlib import Path
 import warnings
 from tqdm import tqdm
-from typing import Optional, Tuple, Union, Any
+from typing import Optional, Tuple, Union #, Any
 import numpy as np
 import pandas as pd
 from datetime import datetime
 import matplotlib.pyplot as plt
 # from pandas.conftest import axis_1
-from pygimli.viewer.mpl import drawModel1D
-from scipy.interpolate import griddata, CubicSpline
-from scipy.optimize import curve_fit #todo: schauen ob man das sinnvoll einbauen kann?? @jakob
+import pygimli.viewer.mpl
+# from scipy.interpolate import griddata, CubicSpline
+# from scipy.optimize import curve_fit #todo: schauen ob man das sinnvoll einbauen kann?? @jakob
 
 from src.core.gp_file import GPfile
 from src.tem.TEM_frwrd.TEM_inv import tem_inv_smooth1D
@@ -1192,7 +1192,7 @@ class SurveyTEM(SurveyBase):
         ax[1].yaxis.set_label_position("right")
         ax[1].grid(True, which="both", alpha=.3)
 
-        drawModel1D(ax[2], thks, model_unit, color='k', label='pyGIMLI')
+        pygimli.viewer.mpl.drawModel1D(ax[2], thks, model_unit, color='k', label='pyGIMLI')
         ax[2].set_xlabel(unit_label_mod, fontsize=16)
         ax[2].set_ylabel('depth [m]', fontsize=16)
         ax[2].yaxis.tick_right()
