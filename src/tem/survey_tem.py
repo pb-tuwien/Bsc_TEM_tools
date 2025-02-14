@@ -1239,7 +1239,7 @@ class SurveyTEM(SurveyBase):
                                      unit=unit,
                                      fname=fname)
 
-    def analyse_inversion(self, sounding: str,
+    def analyse_inversion_cs(self, sounding: str,
                            layers,
                            max_depth: float,
                            test_range:tuple=(10, 10000, 30),
@@ -1323,6 +1323,32 @@ class SurveyTEM(SurveyBase):
             'data_inversion_analysis') / file_name)
 
         return None #opt_lambda
+
+    @staticmethod
+    def _menger_curvature(p1, p2, p3):
+        if any([len(p) != 2 for p in [p1, p2, p3]]):
+            raise ValueError('Only implemented for 2D Points')
+        p1, p2, p3 = np.array(p1), np.array(p2), np.array(p3)
+        matrix = np.array([p2 - p1, p3 - p1])
+
+        dist_12 = np.linalg.norm(p2 - p1)
+        dist_23 = np.linalg.norm(p3 - p2)
+        dist_31 = np.linalg.norm(p1 - p3)
+
+        det = matrix[0, 0] * matrix[1, 1] - matrix[0, 1] * matrix[1, 0]
+
+        curvature = (2 * det) / (dist_12 * dist_23 * dist_31)**0.5
+        return curvature
+
+
+    def analyse_inversion_gss(self,sounding: str,
+                           layers,
+                           max_depth: float,
+                           test_range:tuple=(10, 10000),
+                           layer_type:str = 'linear',
+                           filter_times=(7, 700),
+                          fname: str = None) -> None:
+        pass
 
     def analyse_inversion_plot(self, sounding: str,
                            layers,
