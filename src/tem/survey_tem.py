@@ -988,7 +988,7 @@ class SurveyTEM(SurveyBase):
     def plot_raw_filtered(self, subset: list = None, unit: str = 'rhoa', scale: str = 'log',
                           filter_times: Tuple[Union[int, float], Union[int, float]] = (7, 700),
                           noise_floor: [int, float] = 0.025, legend=True,
-                          fname: str = None) -> None:
+                          fname: Union[str, bool] = None) -> None:
 
         plot_list = [point for point in self._data_raw.keys() if subset is None or point in subset]
         self.data_filter(subset=subset, filter_times=filter_times, noise_floor=noise_floor)
@@ -1053,7 +1053,7 @@ class SurveyTEM(SurveyBase):
                           filter_times: Tuple[Union[int, float], Union[int, float]] = (5, 1000),
                           layer_type = 'linear', layers = 1, max_depth = None,
                            start_model = None, verbose=True, legend=False,
-                           fname: str = None) -> None:
+                           fname: Union[str, bool] = None) -> None:
 
         plot_list = [point for point in self._data_raw.keys() if subset is None or point in subset]
         self.data_forward(layer_type=layer_type, layers=layers, max_depth=max_depth, filter_times=filter_times,
@@ -1133,7 +1133,7 @@ class SurveyTEM(SurveyBase):
                            layer_type: str = 'linear',
                            layers: [int, float, dict, np.ndarray] = 4.5,
                            unit: str = 'rhoa',
-                           fname: str = None) -> None:
+                           fname: Union[str, bool] = None) -> None:
 
         inv_name = f'{lam}_{filter_times[0]}_{filter_times[1]}'
         filter_name = f'{filter_times[0]}_{filter_times[1]}_{noise_floor}'
@@ -1229,7 +1229,7 @@ class SurveyTEM(SurveyBase):
                        unit: str = 'rhoa',
                        filter_times=(7, 700),
                        verbose: bool = True,
-                       fname: str = None) -> None:
+                       fname: Union[str, bool] = None) -> None:
 
         plot_list = [point for point in self._data_preprocessed.keys() if subset is None or point in subset]
 
@@ -1284,7 +1284,7 @@ class SurveyTEM(SurveyBase):
                            test_range:tuple=(10, 10000, 30),
                            layer_type:str = 'linear',
                            filter_times=(7, 700),
-                          fname: str = None):
+                          fname: Union[str, bool] = None):
 
         test_tuple = test_range if len(test_range) == 3 else (test_range[0], test_range[1], 30)
         lambda_values = np.logspace(np.log10(test_tuple[0]), np.log10(test_tuple[1]), test_tuple[2])
@@ -1362,7 +1362,7 @@ class SurveyTEM(SurveyBase):
                            test_range:tuple=(10, 10000, 30),
                            layer_type:str = 'linear',
                            filter_times=(7, 700),
-                          fname: str = None):
+                          fname: Union[str, bool] = None):
 
         test_tuple = test_range if len(test_range) == 3 else (test_range[0], test_range[1], 30)
         lambda_values = np.logspace(np.log10(test_tuple[0]), np.log10(test_tuple[1]), test_tuple[2])
@@ -1432,7 +1432,7 @@ class SurveyTEM(SurveyBase):
                                          filter_times = (7, 700),
                                          max_iter: int = 20,
                                          tolerance: float = 0.01,
-                                         fname: str = None) -> float:
+                                         fname: Union[str, bool] = None) -> float:
         phi = (1 + 5 ** 0.5) / 2
 
         lam1, lam4 = test_range
@@ -1521,12 +1521,13 @@ class SurveyTEM(SurveyBase):
         return opt_lambda
 
     def l_curve_plot(self, sounding: str,
-                           layers,
-                           max_depth: float,
-                           test_range:tuple=(10, 10000, 30),
-                           layer_type:str = 'linear',
-                           filter_times=(7, 700),
-                          fname: str = None):
+                     layers,
+                     max_depth: float,
+                     test_range:tuple=(10, 10000, 30),
+                     layer_type:str = 'linear',
+                     filter_times=(7, 700),
+                     fname: Union[str, bool] = None):
+
         test_tuple = test_range if len(test_range) == 3 else (test_range[0], test_range[1], 30)
         lambda_values = np.logspace(np.log10(test_tuple[0]), np.log10(test_tuple[1]), test_tuple[2])
         inv_points = []
@@ -1565,6 +1566,49 @@ class SurveyTEM(SurveyBase):
             file_name = f'lambda_analysis_l_curve_{time}_{sounding}_{filter_times[0]}_{filter_times[1]}.png' if fname is None else fname
             fig.savefig(self._folder_structure.get(
                 'data_inversion_analysis') / file_name)
+        return fig
+
+    def lambda_analysis_comparison(self, sounding: str,
+                                   layers,
+                                   max_depth: float,
+                                   test_range:tuple=(10, 10000, 30),
+                                   layer_type:str = 'linear',
+                                   filter_times=(7, 700),
+                                   fname: Union[str, bool] = None):
+        fig = self.l_curve_plot(sounding=sounding, layers=layers, max_depth=max_depth,
+                                test_range=test_range, layer_type=layer_type, filter_times=filter_times,
+                                fname=False)
+        opt_grad = self.analyse_inversion_gradient_curvature(sounding=sounding, layers=layers, max_depth=max_depth,
+                                test_range=test_range, layer_type=layer_type, filter_times=filter_times,
+                                fname=False)
+        opt_cubic = self.analyse_inversion_cubic_spline_curvature(sounding=sounding, layers=layers, max_depth=max_depth,
+                                test_range=test_range, layer_type=layer_type, filter_times=filter_times,
+                                fname=False)
+        opt_golden = self.analyse_inversion_golden_section(sounding=sounding, layers=layers, max_depth=max_depth,
+                                test_range=(test_range[0], test_range[1]), layer_type=layer_type,
+                                filter_times=filter_times, fname=False)
+
+        point_grad = self._l_curve_point(sounding=sounding, lam=opt_grad, layer_type=layer_type,
+                                         layers=layers, max_depth=max_depth, filter_times=filter_times)
+        point_cubic = self._l_curve_point(sounding=sounding, lam=opt_cubic, layer_type=layer_type,
+                                         layers=layers, max_depth=max_depth, filter_times=filter_times)
+        point_golden = self._l_curve_point(sounding=sounding, lam=opt_golden, layer_type=layer_type,
+                                         layers=layers, max_depth=max_depth, filter_times=filter_times)
+
+        ax = fig.get_axes()[0]
+        ax.plot(*point_grad, 'd', label='Gradient-Based Curvature')
+        ax.plot(*point_cubic, 's', label='Cubic_Spline-Based Curvature')
+        ax.plot(*point_golden, 'x', label='Golden Section Search')
+        ax.legend()
+
+        time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        fig.tight_layout()
+        fig.show()
+        if fname or fname is None:
+            file_name = f'lambda_analysis_comparison_{time}_{sounding}_{filter_times[0]}_{filter_times[1]}.png' if fname is None else fname
+            fig.savefig(self._folder_structure.get(
+                'data_inversion_analysis') / file_name)
+        return fig
 
     def analyse_inversion_plot(self, sounding: str,
                            layers,
@@ -1574,7 +1618,7 @@ class SurveyTEM(SurveyBase):
                            filter_times=(7, 700),
                            noise_floor: [int, float] = 0.025,
                            unit: str = 'rhoa',
-                               fname: str = None) -> None:
+                               fname: Union[str, bool] = None) -> None:
 
         test_tuple = test_range if len(test_range) == 3 else (test_range[0], test_range[1], 30)
         lambda_values = np.logspace(np.log10(test_tuple[0]), np.log10(test_tuple[1]), test_tuple[2])
@@ -1641,3 +1685,134 @@ class SurveyTEM(SurveyBase):
             file_name_2 = f'lambda_analysis_{unit}_{time}_{sounding}_{filter_times[0]}_{filter_times[1]}.png' if fname is None else f'{unit}_{fname}'
             fig2.savefig(self._folder_structure.get(
                 'data_inversion_analysis') / file_name_2)
+
+    def optimised_inversion_plot(self, sounding: str = None,
+                                 lam: Union[int, float] = 600,
+                                 layer_type: str = 'linear',
+                                 layers: Union[int, float, dict, np.ndarray] = 4.5,
+                                 max_depth: [float, int] = None,
+                                 start_model: np.ndarray = None,
+                                 noise_floor: [float, int] = 0.025,
+                                 test_range: tuple = (10, 10000, 30),
+                                 unit: str = 'rhoa',
+                                 filter_times=(7, 700),
+                                 verbose: bool = True,
+                                 fname: Union[str, bool] = None) -> None:
+
+        self.data_inversion(subset=[sounding], lam=lam, layer_type=layer_type, layers=layers,
+                            max_depth=max_depth, filter_times=filter_times,
+                            start_model=start_model, noise_floor=noise_floor,
+                            verbose=verbose)
+
+        test_tuple = test_range if len(test_range) == 3 else (test_range[0], test_range[1], 30)
+        lambda_values = np.logspace(np.log10(test_tuple[0]), np.log10(test_tuple[1]), test_tuple[2])
+        inv_points = []
+
+        for l in lambda_values:
+            inv_point = self._l_curve_point(sounding=sounding, lam=l, layer_type=layer_type,
+                                            layers=layers, max_depth=max_depth, filter_times=filter_times)
+            if inv_point is not None:
+                inv_points.append(inv_point)
+        if not inv_points:
+            self.logger.error('l_curve_plot: Not inversion results found.')
+            return
+
+        inv_points = np.array(inv_points)
+        roughness_values = inv_points.T[0]
+        rms_values = inv_points.T[1]
+        lambda_values = np.array(lambda_values)
+
+        inv_name = f'{lam}_{filter_times[0]}_{filter_times[1]}'
+        filter_name = f'{filter_times[0]}_{filter_times[1]}_{noise_floor}'
+        inverted_data = self._data_inverted.get(sounding, {}).get(inv_name)
+        filtered_data = self._data_filtered.get(sounding, {}).get(filter_name)
+
+        if inverted_data is None:
+            self.logger.error(f'No inversion data found for {sounding}.')
+            return
+
+        if filtered_data is None:
+            self.logger.error(f'No filtered data found for {sounding}.')
+            return
+
+        filtered_data = filtered_data.get('data')
+        inversion_data = inverted_data.get('data')
+        inversion_metadata = inverted_data.get('metadata')
+
+        obs_unit = filtered_data[unit]
+        response_unit = inversion_data[unit].dropna()
+        thks = inversion_data['modelled_thickness'].dropna()
+        resp_sgnl = inversion_data['E/I[V/A]'].dropna()
+        chi2 = inversion_metadata.get('chi2')
+        rrms = inversion_metadata.get('relrms')
+        abs_rms = inversion_metadata.get('absrms')
+        roughness = inversion_metadata.get('phi_model')
+
+        if unit == 'rhoa':
+            unit_label_ax = r'$\rho_a$ [$\Omega$m]'
+            unit_title = 'Apparent Resistivity'
+            unit_title_mod = 'Resistivity'
+            unit_label_mod = r'$\rho$ [$\Omega$m]'
+            model_unit = inversion_data['resistivity_model'].dropna()
+            pos_1 = 'right'
+            pos_2 = 'left'
+        else:
+            unit_label_ax = r'$\sigma_a$ [S/m]'
+            unit_title = 'Apparent Conductivity'
+            unit_title_mod = 'Conductivity'
+            unit_label_mod = r'$\sigma$ [S/m]'
+            model_unit = inversion_data['conductivity_model'].dropna()
+            pos_1 = 'left'
+            pos_2 = 'right'
+
+        fig, ax = plt.subplots(2, 2, figsize=(12, 12), constrained_layout=True)
+        ax = ax.ravel()
+
+        ax[0].loglog(filtered_data['Time'], resp_sgnl, '-k', label='inversion', zorder=3)
+        ax[0].plot(filtered_data['Time'], filtered_data['E/I[V/A]'], marker='v', label='observed', zorder=2) #color=self.col,
+        ax[0].plot(filtered_data['Time'], filtered_data['Err[V/A]'], label='error', zorder=1, alpha=0.4, linestyle='dashed') #color=self.col,
+        ax[0].set_xlabel('time [s]', fontsize=16)
+        ax[0].set_ylabel(r'$\partial B_z/\partial t$ [V/m²]', fontsize=16)
+        ax[0].grid(True, which="both", alpha=.3)
+
+        ax[1].plot(filtered_data['Time'], response_unit, '-k', label='inversion', zorder=3)
+        ax[1].plot(filtered_data['Time'], obs_unit, marker='v', label='observed', zorder=2) #color=self.col,
+        ax[1].set_xlabel('time [s]', fontsize=16)
+        ax[1].set_ylabel(unit_label_ax, fontsize=16)
+        ax[1].set_xscale('log')
+        ax[1].yaxis.tick_right()
+        ax[1].yaxis.set_label_position("right")
+        ax[1].grid(True, which="both", alpha=.3)
+
+        pygimli.viewer.mpl.drawModel1D(ax[2], thks, model_unit, color='k', label='pyGIMLI')
+        ax[2].set_xlabel(unit_label_mod, fontsize=16)
+        ax[2].set_ylabel('depth [m]', fontsize=16)
+        ax[2].yaxis.tick_right()
+        ax[2].yaxis.set_label_position("right")
+
+        ax[3].plot(roughness_values, rms_values, 'o', label='L-Curve')
+        ax[3].plot(roughness, abs_rms, 's', label=f'Optimal Lambda: {lam}')
+        ax[3].set_xlabel('roughness')
+        ax[3].set_ylabel('rms')
+        ax[3].set_title('L-Curve', fontsize=18, pad=12)
+        ax[3].tick_params(axis='both', which='major', labelsize=14)
+        ax[3].legend()
+        ax[3].grid(True, which="both", alpha=.3)
+
+        for a, title, pos in zip(ax[:-1], ['Impulse Response', unit_title, 'Model of {} at Depth'.format(unit_title_mod)], ['lower left', 'lower {}'.format(pos_1), 'lower {}'.format(pos_2)]):
+            a.legend(loc=pos)
+            a.set_title(title, fontsize=18, pad=12)
+            a.tick_params(axis='both', which='major', labelsize=14)
+
+        if layer_type == 'linear':
+            fig.suptitle(f'Lambda = {lam:<8.0f} Layer Thickness = {layers:<.2f}m\n\u03C7\u00B2 = {chi2:<8.2f} Relative RMS = {rrms:<.2f}%', fontsize=22, fontweight='bold')
+        else:
+            fig.suptitle(f'Lambda = {lam:<8.0f} Layer Thickness = {layer_type}\n\u03C7\u00B2 = {chi2:<8.2f} Relative RMS = {rrms:<.2f}%', fontsize=22, fontweight='bold')
+
+        fig.show()
+
+        target_dir = self._folder_structure.get('data_inversion_plot')
+        time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        if fname or fname is None:
+            file_name = f'{sounding}_{time}_{unit}.png' if fname is None else f'{sounding}_{fname}'
+            fig.savefig(target_dir / file_name)

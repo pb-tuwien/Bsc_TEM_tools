@@ -41,11 +41,18 @@ survey.data_preprocess(parsing_dict=parsing_coords)
 #                                         max_depth=30,
 #                                         test_range=(100, 400),
 #                                         filter_times=(8, 80))
-survey.l_curve_plot(sounding='M024',
-                    layer_type='dict',
-                    layers={0:1, 5:1.5, 15:2},
-                    max_depth=30,
-                    test_range=(10, 1000, 20),
-                    filter_times=(8, 80))
+# _ = survey.l_curve_plot(sounding='M024',
+#                     layer_type='dict',
+#                     layers={0:1, 5:1.5, 15:2},
+#                     max_depth=30,
+#                     test_range=(10, 1000, 20),
+#                     filter_times=(8, 80))
 
-survey.plot_raw_filtered()
+survey.optimised_inversion_plot(sounding='M024',
+                                layer_type='dict',
+                                layers={0:1, 5:1.5, 15:2},
+                                max_depth=30,
+                                test_range=(10, 1000, 20),
+                                filter_times=(8, 80),
+                                lam=234,
+                                fname=False)
