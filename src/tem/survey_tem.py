@@ -16,7 +16,7 @@ import pandas as pd
 from datetime import datetime
 import matplotlib.pyplot as plt
 import pygimli.viewer.mpl
-# from scipy.interpolate import griddata, CubicSpline
+from scipy.interpolate import CubicSpline
 
 from src.core.gp_file import GPfile
 from src.tem.TEM_frwrd.TEM_inv import tem_inv_smooth1D
@@ -351,8 +351,12 @@ class SurveyTEM(SurveyBase):
         preproc_path = self._folder_structure.get('data_preproc')
 
         if data_dict is None:
-            data_dict = self._data_raw.copy()
-            data_path = preproc_path / f'{self._data_raw_path.stem}_proc{self._data_raw_path.suffix}'
+            data_dict = self._data_raw
+            if not self._data_raw_path is None:
+                data_path = preproc_path / f'{self._data_raw_path.stem}_proc{self._data_raw_path.suffix}'
+            else:
+                self.logger.error('data_preprocess: No raw data path found.')
+                return
         else:
             data_path = preproc_path / f'preprocessed_data.tem'
 
@@ -647,7 +651,9 @@ class SurveyTEM(SurveyBase):
                        noise_floor: [float, int] = 0.025,
                        subset: list = None,
                        verbose: bool = True) -> None:
-
+        if self._data_preprocessed is None:
+            self.logger.error('data_inversion: No preprocessed data found.')
+            return
         if subset is None:
             subset = list(self._data_preprocessed.keys())
         else:
@@ -1039,8 +1045,9 @@ class SurveyTEM(SurveyBase):
         fig.show()
         target_dir = self._folder_structure.get('data_first_look')
         time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        file_name = f'raw_filtered_{time}_{filter_times[0]}_{filter_times[1]}_{unit}.png' if fname is None else fname
-        fig.savefig(target_dir / file_name)
+        if fname or fname is None:
+            file_name = f'raw_filtered_{time}_{filter_times[0]}_{filter_times[1]}_{unit}.png' if fname is None else fname
+            fig.savefig(target_dir / file_name)
 
     def plot_forward_model(self, subset: list = None, unit: str = 'rhoa', scale: str = 'log',
                           filter_times: Tuple[Union[int, float], Union[int, float]] = (5, 1000),
@@ -1115,8 +1122,9 @@ class SurveyTEM(SurveyBase):
         fig.show()
         target_dir = self._folder_structure.get('data_forward')
         time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        file_name = f'forward_model_{time}_{filter_times[0]}_{filter_times[1]}_{unit}.png' if fname is None else fname
-        fig.savefig(target_dir / file_name)
+        if fname or fname is None:
+            file_name = f'forward_model_{time}_{filter_times[0]}_{filter_times[1]}_{unit}.png' if fname is None else fname
+            fig.savefig(target_dir / file_name)
 
     def _plot_one_inversion(self, dict_key,
                            lam: [int, float] = 600,
@@ -1207,8 +1215,9 @@ class SurveyTEM(SurveyBase):
 
         target_dir = self._folder_structure.get('data_inversion_plot')
         time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        file_name = f'{dict_key}_{time}_{unit}.png' if fname is None else f'{dict_key}_{fname}'
-        fig.savefig(target_dir / file_name)
+        if fname or fname is None:
+            file_name = f'{dict_key}_{time}_{unit}.png' if fname is None else f'{dict_key}_{fname}'
+            fig.savefig(target_dir / file_name)
 
     def plot_inversion(self, subset:list=None,
                        lam: [int, float] = 600,
@@ -1239,97 +1248,12 @@ class SurveyTEM(SurveyBase):
                                      unit=unit,
                                      fname=fname)
 
-    def analyse_inversion_cs(self, sounding: str,
-                           layers,
-                           max_depth: float,
-                           test_range:tuple=(10, 10000, 30),
-                           layer_type:str = 'linear',
-                           filter_times=(7, 700),
-                          fname: str = None) -> None:
-
-        test_tuple = test_range if len(test_range) == 3 else (test_range[0], test_range[1], 30)
-        lambda_values = np.logspace(np.log10(test_tuple[0]), np.log10(test_tuple[1]), test_tuple[2])
-        roughness_values = []
-        rms_values = []
-
-        for lam in lambda_values:
-            self.data_inversion(subset=[sounding], lam=lam, layer_type=layer_type, layers=layers,
-                                verbose=False, max_depth=max_depth, filter_times=filter_times,
-                                noise_floor=0.025, start_model=None)
-
-            inversion_dict = self._data_inverted.get(sounding, {}).get(f'{lam}_{filter_times[0]}_{filter_times[1]}')
-            rms_values.append(inversion_dict.get('metadata').get('absrms'))
-            roughness_values.append(inversion_dict.get('metadata').get('phi_model'))
-
-
-        roughness_values = np.array(roughness_values)
-        rms_values = np.array(rms_values)
-        lambda_values = np.array(lambda_values)
-
-        # roughness_values = np.log10(roughness_values)
-        # rms_values = np.log10(rms_values)
-
-        # sorted_indices = np.argsort(roughness_values)
-        # roughness_values = roughness_values[sorted_indices]
-        # rms_values = rms_values[sorted_indices]
-        # lambda_values = lambda_values[sorted_indices]
-
-        # cs = CubicSpline(roughness_values, rms_values)
-        # cs_d = cs.derivative(nu=1)
-        # cs_dd = cs.derivative(nu=2)
-        #
-        # first_derivative = cs_d(roughness_values)
-        # second_derivative = cs_dd(roughness_values)
-        #
-        # curvature_values = second_derivative / (1 + first_derivative ** 2) ** (3 / 2)
-        # max_curvature_index = np.argmax(curvature_values)
-        # opt_lambda = lambda_values[max_curvature_index]
-        #
-        # max_curvature_roughness = roughness_values[max_curvature_index]
-        #
-        # x_new = np.linspace(roughness_values.min(), roughness_values.max(), 500)
-        # y_new = cs(x_new)
-        # curvature_new = cs_dd(x_new) / (1 + cs_d(x_new) ** 2) ** (3 / 2)
-
-        fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-        ax[0].plot(roughness_values, rms_values, 'o', label='Original data')
-        for i in np.linspace(0, len(lambda_values) - 1, 5).astype(int):
-            ax[0].annotate(f'{lambda_values[i]:.0f}', (roughness_values[i], rms_values[i]), fontsize=8, ha='right',
-                           textcoords="offset points", xytext=(10, 10))
-        # ax[0].plot(x_new, y_new, '-', label='Cubic spline fit')
-        # ax[0].vlines(max_curvature_roughness, rms_values.min(), rms_values.max(), colors='r', linestyles='--',
-        #              label='Optimum at lambda = {:.2f}'.format(opt_lambda))
-        ax[0].set_xlabel('log10(roughness)')
-        ax[0].set_ylabel('log10(rms)')
-        ax[0].set_title('RMS/Smoothness curve')
-        ax[0].legend()
-
-        # ax[1].plot(roughness_values, curvature_values, 'o', label='Curvature')
-        # for i in np.linspace(0, len(lambda_values) - 1, 5).astype(int):
-        #     ax[1].annotate(f'{lambda_values[i]:.0f}', (roughness_values[i], curvature_values[i]), fontsize=8, ha='right',
-        #                    textcoords="offset points", xytext=(10, 10))
-        # ax[1].plot(x_new, curvature_new, '-', label='Curvature fit')
-        # ax[1].vlines(max_curvature_roughness, curvature_values.min(), curvature_values.max(), colors='r', linestyles='--',
-        #              label='Max curvature at lambda = {:.2f}'.format(opt_lambda))
-        ax[1].set_xlabel('log10(roughness)')
-        ax[1].set_ylabel('Curvature')
-        ax[1].set_title('Curvature of the RMS/Smoothness curve')
-
-        time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        fig.tight_layout()
-        fig.show()
-        file_name = f'lambda_analysis_{time}_{sounding}_{filter_times[0]}_{filter_times[1]}.png' if fname is None else fname
-        fig.savefig(self._folder_structure.get(
-            'data_inversion_analysis') / file_name)
-
-        return None #opt_lambda
-
     @staticmethod
     def _menger_curvature(p1, p2, p3):
         if any([len(p) != 2 for p in [p1, p2, p3]]):
             raise ValueError('Only implemented for 2D Points')
         p1, p2, p3 = np.array(p1), np.array(p2), np.array(p3)
-        matrix = np.array([p2 - p1, p3 - p1])
+        matrix = np.array([p2 - p1, p3 - p2])
 
         dist_12 = np.linalg.norm(p2 - p1)
         dist_23 = np.linalg.norm(p3 - p2)
@@ -1337,18 +1261,310 @@ class SurveyTEM(SurveyBase):
 
         det = matrix[0, 0] * matrix[1, 1] - matrix[0, 1] * matrix[1, 0]
 
-        curvature = (2 * det) / (dist_12 * dist_23 * dist_31)**0.5
+        curvature = (2 * np.abs(det)) / (dist_12 * dist_23 * dist_31) ** 0.5
         return curvature
 
+    def _l_curve_point(self, sounding, lam, filter_times, layer_type, layers, max_depth):
+        if sounding is not type(list):
+            sounding = [sounding]
+        self.data_inversion(subset=sounding, lam=lam, layer_type=layer_type, layers=layers,
+                            verbose=False, max_depth=max_depth, filter_times=filter_times,
+                            noise_floor=0.025, start_model=None)
+        if self._data_inverted is None:
+            self.logger.error('_l_curve_point: Inversion results not found.')
+            return
+        inversion_dict = self._data_inverted.get(sounding[0], {}).get(f'{lam}_{filter_times[0]}_{filter_times[1]}')
+        rms_value = inversion_dict.get('metadata').get('absrms')
+        roughness_value = inversion_dict.get('metadata').get('phi_model')
+        return np.array([roughness_value, rms_value])
 
-    def analyse_inversion_gss(self,sounding: str,
+    def analyse_inversion_cubic_spline_curvature(self, sounding: str,
                            layers,
                            max_depth: float,
-                           test_range:tuple=(10, 10000),
+                           test_range:tuple=(10, 10000, 30),
                            layer_type:str = 'linear',
                            filter_times=(7, 700),
-                          fname: str = None) -> None:
-        pass
+                          fname: str = None):
+
+        test_tuple = test_range if len(test_range) == 3 else (test_range[0], test_range[1], 30)
+        lambda_values = np.logspace(np.log10(test_tuple[0]), np.log10(test_tuple[1]), test_tuple[2])
+        inv_points = []
+
+        for lam in lambda_values:
+            inv_point = self._l_curve_point(sounding=sounding, lam=lam, layer_type=layer_type,
+                                            layers=layers,max_depth=max_depth, filter_times=filter_times)
+            inv_points.append(inv_point)
+
+        inv_points = np.array(inv_points)
+        roughness_values = inv_points.T[0]
+        rms_values = inv_points.T[1]
+        lambda_values = np.array(lambda_values)
+
+        sorted_indices = np.argsort(roughness_values)
+        roughness_values = roughness_values[sorted_indices]
+        rms_values = rms_values[sorted_indices]
+        lambda_values = lambda_values[sorted_indices]
+
+        cs = CubicSpline(roughness_values, rms_values)
+        cs_d = cs.derivative(nu=1)
+        cs_dd = cs.derivative(nu=2)
+
+        first_derivative = cs_d(roughness_values)
+        second_derivative = cs_dd(roughness_values)
+
+        curvature_values = second_derivative / (1 + first_derivative ** 2) ** (3 / 2)
+        max_curvature_index = np.argmax(curvature_values)
+        opt_lambda = lambda_values[max_curvature_index]
+
+        max_curvature_roughness = roughness_values[max_curvature_index]
+
+        x_new = np.linspace(roughness_values.min(), roughness_values.max(), 500)
+        y_new = cs(x_new)
+        curvature_new = cs_dd(x_new) / (1 + cs_d(x_new) ** 2) ** (3 / 2)
+
+        fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+        ax[0].plot(roughness_values, rms_values, 'o', label='Original data')
+        for i in np.linspace(0, len(lambda_values) - 1, 5).astype(int):
+            ax[0].annotate(f'{lambda_values[i]:.0f}', (roughness_values[i], rms_values[i]), fontsize=8, ha='right',
+                           textcoords="offset points", xytext=(10, 10))
+        ax[0].plot(x_new, y_new, '-', label='Cubic spline fit')
+        ax[0].vlines(max_curvature_roughness, rms_values.min(), rms_values.max(), colors='r', linestyles='--',
+                     label='Optimum at lambda = {:.2f}'.format(opt_lambda))
+        ax[0].set_xlabel('roughness')
+        ax[0].set_ylabel('rms')
+        ax[0].set_title('RMS/Smoothness curve')
+        ax[0].legend()
+
+        ax[1].plot(roughness_values, curvature_values, 'o', label='Curvature')
+        for i in np.linspace(0, len(lambda_values) - 1, 5).astype(int):
+            ax[1].annotate(f'{lambda_values[i]:.0f}', (roughness_values[i], curvature_values[i]), fontsize=8, ha='right',
+                           textcoords="offset points", xytext=(10, 10))
+        ax[1].plot(x_new, curvature_new, '-', label='Curvature fit')
+        ax[1].vlines(max_curvature_roughness, curvature_values.min(), curvature_values.max(), colors='r', linestyles='--',
+                     label='Max curvature at lambda = {:.2f}'.format(opt_lambda))
+        ax[1].set_xlabel('roughness')
+        ax[1].set_ylabel('Curvature')
+        ax[1].set_title('Curvature of the RMS/Smoothness curve')
+
+        time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        fig.tight_layout()
+        fig.show()
+        if fname or fname is None:
+            file_name = f'lambda_analysis_cubic_spline_{time}_{sounding}_{filter_times[0]}_{filter_times[1]}.png' if fname is None else fname
+            fig.savefig(self._folder_structure.get(
+                'data_inversion_analysis') / file_name)
+
+        return opt_lambda
+
+    def analyse_inversion_gradient_curvature(self, sounding: str,
+                           layers,
+                           max_depth: float,
+                           test_range:tuple=(10, 10000, 30),
+                           layer_type:str = 'linear',
+                           filter_times=(7, 700),
+                          fname: str = None):
+
+        test_tuple = test_range if len(test_range) == 3 else (test_range[0], test_range[1], 30)
+        lambda_values = np.logspace(np.log10(test_tuple[0]), np.log10(test_tuple[1]), test_tuple[2])
+        inv_points = []
+
+        for lam in lambda_values:
+            inv_point = self._l_curve_point(sounding=sounding, lam=lam, layer_type=layer_type,
+                                            layers=layers, max_depth=max_depth, filter_times=filter_times)
+            inv_points.append(inv_point)
+
+        inv_points = np.array(inv_points)
+        roughness_values = inv_points.T[0]
+        rms_values = inv_points.T[1]
+        lambda_values = np.array(lambda_values)
+
+        sorted_indices = np.argsort(roughness_values)
+        roughness_values = roughness_values[sorted_indices]
+        rms_values = rms_values[sorted_indices]
+        lambda_values = lambda_values[sorted_indices]
+
+        first_derivative = np.gradient(rms_values, roughness_values)
+        second_derivative = np.gradient(first_derivative, roughness_values)
+
+        curvature_values = second_derivative / (1 + first_derivative ** 2) ** (3 / 2)
+        max_curvature_index = np.argmax(curvature_values)
+        opt_lambda = lambda_values[max_curvature_index]
+
+        max_curvature_roughness = roughness_values[max_curvature_index]
+
+        fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+        ax[0].plot(roughness_values, rms_values, 'o', label='Original data')
+        for i in np.linspace(0, len(lambda_values) - 1, 5).astype(int):
+            ax[0].annotate(f'{lambda_values[i]:.0f}', (roughness_values[i], rms_values[i]), fontsize=8, ha='right',
+                           textcoords="offset points", xytext=(10, 10))
+        ax[0].vlines(max_curvature_roughness, rms_values.min(), rms_values.max(), colors='r', linestyles='--',
+                     label='Optimum at lambda = {:.2f}'.format(opt_lambda))
+        ax[0].set_xlabel('roughness')
+        ax[0].set_ylabel('rms')
+        ax[0].set_title('RMS/Smoothness curve')
+        ax[0].legend()
+
+        ax[1].plot(roughness_values, curvature_values, 'o', label='Curvature')
+        for i in np.linspace(0, len(lambda_values) - 1, 5).astype(int):
+            ax[1].annotate(f'{lambda_values[i]:.0f}', (roughness_values[i], curvature_values[i]), fontsize=8, ha='right',
+                           textcoords="offset points", xytext=(10, 10))
+        ax[1].vlines(max_curvature_roughness, curvature_values.min(), curvature_values.max(), colors='r', linestyles='--',
+                     label='Max curvature at lambda = {:.2f}'.format(opt_lambda))
+        ax[1].set_xlabel('roughness')
+        ax[1].set_ylabel('Curvature')
+        ax[1].set_title('Curvature of the RMS/Smoothness curve')
+
+        time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        fig.tight_layout()
+        fig.show()
+        if fname or fname is None:
+            file_name = f'lambda_analysis_gradient_{time}_{sounding}_{filter_times[0]}_{filter_times[1]}.png' if fname is None else fname
+            fig.savefig(self._folder_structure.get(
+                'data_inversion_analysis') / file_name)
+
+        return opt_lambda
+
+    def analyse_inversion_golden_section(self,sounding: str,
+                                         layers,
+                                         max_depth: float,
+                                         test_range: tuple = (10, 10000),
+                                         layer_type: str = 'linear',
+                                         filter_times = (7, 700),
+                                         max_iter: int = 20,
+                                         tolerance: float = 0.01,
+                                         fname: str = None) -> float:
+        phi = (1 + 5 ** 0.5) / 2
+
+        lam1, lam4 = test_range
+        lam2 = 10 ** ((np.log10(lam4) + phi * np.log10(lam1)) / (1 + phi))
+        lam3 = 10 ** (np.log10(lam1) + np.log10(lam4) - np.log10(lam2))
+
+        lambda_list = [lam1, lam2, lam3, lam4]
+
+        p1 = self._l_curve_point(sounding=sounding, lam=lam1, layer_type=layer_type,
+                                 layers=layers,max_depth=max_depth, filter_times=filter_times)
+        p2 = self._l_curve_point(sounding=sounding, lam=lam2, layer_type=layer_type,
+                                 layers=layers, max_depth=max_depth, filter_times=filter_times)
+        p3 = self._l_curve_point(sounding=sounding, lam=lam3, layer_type=layer_type,
+                                 layers=layers, max_depth=max_depth, filter_times=filter_times)
+        p4 = self._l_curve_point(sounding=sounding, lam=lam4, layer_type=layer_type,
+                                 layers=layers, max_depth=max_depth, filter_times=filter_times)
+
+        points_list = [p1, p2, p3, p4]
+
+        opt_lambda = None
+        opt_point = None
+
+        for i in range(max_iter):
+            if (lam4 - lam1) / lam4 < tolerance:
+                break
+            else:
+                curve2 = self._menger_curvature(p1, p2, p3)
+                curve3 = self._menger_curvature(p2, p3, p4)
+
+                if curve2 > curve3:
+                    opt_lambda = lam2
+                    opt_point = p2
+                    lam4 = lam3
+                    lam3 = lam2
+                    p4 = p3
+                    p3 = p2
+                    lam2 = 10 ** ((np.log10(lam4) + phi * np.log10(lam1)) / (1 + phi))
+                    p2 = self._l_curve_point(sounding=sounding, lam=lam2, layer_type=layer_type,
+                                             layers=layers, max_depth=max_depth, filter_times=filter_times)
+                    lambda_list.append(lam2)
+                    points_list.append(p2)
+                else:
+                    opt_lambda = lam3
+                    opt_point = p3
+                    lam1 = lam2
+                    lam2 = lam3
+                    p1 = p2
+                    p2 = p3
+                    lam3 = 10 ** (np.log10(lam1) + np.log10(lam4) - np.log10(lam2))
+                    p3 = self._l_curve_point(sounding=sounding, lam=lam3, layer_type=layer_type,
+                                             layers=layers, max_depth=max_depth, filter_times=filter_times)
+                    lambda_list.append(lam3)
+                    points_list.append(p3)
+
+        lambda_array = np.array(lambda_list)
+        points_array = np.array(points_list)
+        roughness_array = points_array.T[0]
+        rms_array = points_array.T[1]
+
+        sorted_indices = np.argsort(roughness_array)
+        roughness_values = roughness_array[sorted_indices]
+        rms_values = rms_array[sorted_indices]
+        lambda_values = lambda_array[sorted_indices]
+
+        fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+        ax.plot(roughness_values, rms_values, 'o', label='Original data')
+        for i in np.linspace(0, len(lambda_values) - 1, 5).astype(int):
+            ax.annotate(f'{lambda_values[i]:.0f}', (roughness_values[i], rms_values[i]), fontsize=8, ha='right',
+                           textcoords="offset points", xytext=(10, 10))
+        ax.vlines(opt_point[0], rms_values.min(), rms_values.max(), colors='r', linestyles='--',
+                     label='Optimum at lambda = {:.2f}'.format(opt_lambda))
+        ax.set_xlabel('roughness')
+        ax.set_ylabel('rms')
+        ax.set_title('RMS/Smoothness curve')
+        ax.grid(True)
+        ax.legend()
+
+        time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        fig.tight_layout()
+        fig.show()
+        if fname or fname is None:
+            file_name = f'lambda_analysis_golden_section_{time}_{sounding}_{filter_times[0]}_{filter_times[1]}.png' if fname is None else fname
+            fig.savefig(self._folder_structure.get(
+                'data_inversion_analysis') / file_name)
+
+        return opt_lambda
+
+    def l_curve_plot(self, sounding: str,
+                           layers,
+                           max_depth: float,
+                           test_range:tuple=(10, 10000, 30),
+                           layer_type:str = 'linear',
+                           filter_times=(7, 700),
+                          fname: str = None):
+        test_tuple = test_range if len(test_range) == 3 else (test_range[0], test_range[1], 30)
+        lambda_values = np.logspace(np.log10(test_tuple[0]), np.log10(test_tuple[1]), test_tuple[2])
+        inv_points = []
+
+        for lam in lambda_values:
+            inv_point = self._l_curve_point(sounding=sounding, lam=lam, layer_type=layer_type,
+                                            layers=layers, max_depth=max_depth, filter_times=filter_times)
+            if inv_point is not None:
+                inv_points.append(inv_point)
+        if not inv_points:
+            self.logger.error('l_curve_plot: Not inversion results found.')
+            return
+        inv_points = np.array(inv_points)
+        roughness_values = inv_points.T[0]
+        rms_values = inv_points.T[1]
+        lambda_values = np.array(lambda_values)
+
+        fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+        if roughness_values.size != rms_values.size:
+            self.logger.error('l_curve_plot: Lengths of points not matched.')
+            return
+        ax.plot(roughness_values, rms_values, 'o', label='Original data')
+        for i in np.arange(len(lambda_values)):
+            ax.annotate(f'{lambda_values[i]:.0f}', (roughness_values[i], rms_values[i]), fontsize=8, ha='right',
+                           textcoords="offset points", xytext=(10, 10))
+        ax.set_xlabel('roughness')
+        ax.set_ylabel('rms')
+        ax.set_title('RMS/Smoothness curve')
+        ax.legend()
+        ax.grid(True)
+
+        time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        fig.tight_layout()
+        fig.show()
+        if fname or fname is None:
+            file_name = f'lambda_analysis_l_curve_{time}_{sounding}_{filter_times[0]}_{filter_times[1]}.png' if fname is None else fname
+            fig.savefig(self._folder_structure.get(
+                'data_inversion_analysis') / file_name)
 
     def analyse_inversion_plot(self, sounding: str,
                            layers,
@@ -1415,12 +1631,13 @@ class SurveyTEM(SurveyBase):
         time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         fig1.tight_layout()
         fig1.show()
-        file_name_1 = f'lambda_analysis_{time}_{sounding}_{filter_times[0]}_{filter_times[1]}_signal.png' if fname is None else f'signal_{fname}'
-        fig1.savefig(self._folder_structure.get(
-            'data_inversion_analysis') / file_name_1)
-
         fig2.tight_layout()
         fig2.show()
-        file_name_2 = f'lambda_analysis_{time}_{sounding}_{filter_times[0]}_{filter_times[1]}_{unit}.png' if fname is None else f'{unit}_{fname}'
-        fig2.savefig(self._folder_structure.get(
-            'data_inversion_analysis') / file_name_2)
+        
+        if fname or fname is None:
+            file_name_1 = f'lambda_analysis_signal_{time}_{sounding}_{filter_times[0]}_{filter_times[1]}.png' if fname is None else f'signal_{fname}'
+            fig1.savefig(self._folder_structure.get(
+                'data_inversion_analysis') / file_name_1)
+            file_name_2 = f'lambda_analysis_{unit}_{time}_{sounding}_{filter_times[0]}_{filter_times[1]}.png' if fname is None else f'{unit}_{fname}'
+            fig2.savefig(self._folder_structure.get(
+                'data_inversion_analysis') / file_name_2)

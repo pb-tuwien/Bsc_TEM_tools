@@ -29,4 +29,23 @@ survey = st.SurveyTEM('test/test_dir')
 survey.coords_read()
 survey.data_read()
 survey.data_preprocess(parsing_dict=parsing_coords)
+# survey.analyse_inversion_gradient_curvature(sounding='M024',
+#                              layer_type='dict',
+#                              layers={0:1, 5:1.5, 15:2},
+#                              max_depth=30,
+#                              test_range=(10, 1000, 20),
+#                              filter_times=(8, 80))
+# survey.analyse_inversion_golden_section(sounding='M024',
+#                                         layer_type='dict',
+#                                         layers={0:1, 5:1.5, 15:2},
+#                                         max_depth=30,
+#                                         test_range=(100, 400),
+#                                         filter_times=(8, 80))
+survey.l_curve_plot(sounding='M024',
+                    layer_type='dict',
+                    layers={0:1, 5:1.5, 15:2},
+                    max_depth=30,
+                    test_range=(10, 1000, 20),
+                    filter_times=(8, 80))
 
+survey.plot_raw_filtered()
