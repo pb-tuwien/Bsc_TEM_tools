@@ -730,7 +730,6 @@ class SurveyTEM(SurveyBase):
 
             if max_depth is None:
                 max_depth = np.round(np.sqrt(tloop ** 2 * turn * current), 2)
-                # max_depth = 4 * tloop todo: which is correct, ours or this? 3 (Adrian) or 4 (Lukas)?
 
             if start_model is None:
                 rhoa_median = np.round(np.median(filtered_df['rhoa']), 4)
@@ -820,7 +819,6 @@ class SurveyTEM(SurveyBase):
 
             if max_depth is None:
                 max_depth = np.round(np.sqrt(tloop ** 2 * turn * current), 2)
-                # max_depth = 4 * tloop todo: which is correct, ours or this? 3 (Adrian) or 4 (Lukas)?
 
             if layer_type == 'linear':
                 if verbose:
@@ -1126,26 +1124,24 @@ class SurveyTEM(SurveyBase):
             file_name = f'forward_model_{time}_{filter_times[0]}_{filter_times[1]}_{unit}.png' if fname is None else fname
             fig.savefig(target_dir / file_name)
 
-    def _plot_one_inversion(self, dict_key,
+    def _plot_one_inversion(self, sounding,
                            lam: [int, float] = 600,
                            filter_times: Tuple[Union[float, int], Union[float, int]] = (7, 700),
                            noise_floor: [int, float] = 0.025,
-                           layer_type: str = 'linear',
-                           layers: [int, float, dict, np.ndarray] = 4.5,
                            unit: str = 'rhoa',
                            fname: Union[str, bool] = None) -> None:
 
         inv_name = f'{lam}_{filter_times[0]}_{filter_times[1]}'
         filter_name = f'{filter_times[0]}_{filter_times[1]}_{noise_floor}'
-        inverted_data = self._data_inverted.get(dict_key, {}).get(inv_name)
-        filtered_data = self._data_filtered.get(dict_key, {}).get(filter_name)
+        inverted_data = self._data_inverted.get(sounding, {}).get(inv_name)
+        filtered_data = self._data_filtered.get(sounding, {}).get(filter_name)
 
         if inverted_data is None:
-            self.logger.error(f'No inversion data found for {dict_key}.')
+            self.logger.error(f'No inversion data found for {sounding}.')
             return
 
         if filtered_data is None:
-            self.logger.error(f'No filtered data found for {dict_key}.')
+            self.logger.error(f'No filtered data found for {sounding}.')
             return
 
         filtered_data = filtered_data.get('data')
@@ -1201,22 +1197,27 @@ class SurveyTEM(SurveyBase):
         ax[2].yaxis.tick_right()
         ax[2].yaxis.set_label_position("right")
 
-        for a, title, pos in zip(ax, ['Impulse Response', unit_title, 'Model of {} at Depth'.format(unit_title_mod)], ['lower left', 'lower {}'.format(pos_1), 'lower {}'.format(pos_2)]):
+        packed_list = zip(
+            ax,
+            ['Impulse Response', unit_title, 'Model of {} at Depth'.format(unit_title_mod)],
+            ['lower left', 'lower {}'.format(pos_1), 'lower {}'.format(pos_2)],
+            ['a', 'b', 'c']
+        )
+        for a, title, pos, label in packed_list:
             a.legend(loc=pos)
             a.set_title(title, fontsize=18, pad=12)
             a.tick_params(axis='both', which='major', labelsize=14)
+            a.text(0.96, 0.08, f'({label})', transform=a.transAxes, fontsize=18, zorder=5,
+                   verticalalignment='top', horizontalalignment='right',
+                   bbox=dict(facecolor='xkcd:light grey', boxstyle='round,pad=0.5'))
 
-        if layer_type == 'linear':
-            fig.suptitle(f'Lambda = {lam:<8.0f} Layer Thickness = {layers:<.2f}m\n\u03C7\u00B2 = {chi2:<8.2f} Relative RMS = {rrms:<.2f}%', fontsize=22, fontweight='bold')
-        else:
-            fig.suptitle(f'Lambda = {lam:<8.0f} Layer Thickness = {layer_type}\n\u03C7\u00B2 = {chi2:<8.2f} Relative RMS = {rrms:<.2f}%', fontsize=22, fontweight='bold')
-
+        fig.suptitle(f'$\lambda$ = {lam:<8.0f} Sounding = {sounding}\n$\chi^2$ = {chi2:<8.2f} Relative RMS = {rrms:<.2f}%', fontsize=22, fontweight='bold')
         fig.show()
 
         target_dir = self._folder_structure.get('data_inversion_plot')
         time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         if fname or fname is None:
-            file_name = f'{dict_key}_{time}_{unit}.png' if fname is None else f'{dict_key}_{fname}'
+            file_name = f'{sounding}_{time}_{unit}.png' if fname is None else f'{sounding}_{fname}'
             fig.savefig(target_dir / file_name)
 
     def plot_inversion(self, subset:list=None,
@@ -1239,12 +1240,10 @@ class SurveyTEM(SurveyBase):
                             verbose=verbose)
 
         for key in plot_list:
-            self._plot_one_inversion(dict_key=key,
+            self._plot_one_inversion(sounding=key,
                                      lam=lam,
                                      filter_times=filter_times,
                                      noise_floor=noise_floor,
-                                     layer_type=layer_type,
-                                     layers=layers,
                                      unit=unit,
                                      fname=fname)
 
@@ -1324,27 +1323,29 @@ class SurveyTEM(SurveyBase):
 
         fig, ax = plt.subplots(1, 2, figsize=(12, 6))
         ax[0].plot(roughness_values, rms_values, 'o', label='Original data')
-        for i in np.linspace(0, len(lambda_values) - 1, 5).astype(int):
+        for i in np.arange(len(lambda_values)):
             ax[0].annotate(f'{lambda_values[i]:.0f}', (roughness_values[i], rms_values[i]), fontsize=8, ha='right',
                            textcoords="offset points", xytext=(10, 10))
         ax[0].plot(x_new, y_new, '-', label='Cubic spline fit')
         ax[0].vlines(max_curvature_roughness, rms_values.min(), rms_values.max(), colors='r', linestyles='--',
                      label='Optimum at lambda = {:.2f}'.format(opt_lambda))
-        ax[0].set_xlabel('roughness')
-        ax[0].set_ylabel('rms')
-        ax[0].set_title('RMS/Smoothness curve')
+        ax[0].set_xlabel('Roughness')
+        ax[0].set_ylabel('RMS')
+        ax[0].set_title(f'L-Curve (Sounding: {sounding})')
         ax[0].legend()
+        ax[0].grid(True, which="both", alpha=.3)
 
         ax[1].plot(roughness_values, curvature_values, 'o', label='Curvature')
-        for i in np.linspace(0, len(lambda_values) - 1, 5).astype(int):
+        for i in np.arange(len(lambda_values)):
             ax[1].annotate(f'{lambda_values[i]:.0f}', (roughness_values[i], curvature_values[i]), fontsize=8, ha='right',
                            textcoords="offset points", xytext=(10, 10))
         ax[1].plot(x_new, curvature_new, '-', label='Curvature fit')
         ax[1].vlines(max_curvature_roughness, curvature_values.min(), curvature_values.max(), colors='r', linestyles='--',
                      label='Max curvature at lambda = {:.2f}'.format(opt_lambda))
-        ax[1].set_xlabel('roughness')
+        ax[1].set_xlabel('Roughness')
         ax[1].set_ylabel('Curvature')
-        ax[1].set_title('Curvature of the RMS/Smoothness curve')
+        ax[1].set_title(f'Curvature of the L-Curve')
+        ax[1].grid(True, which="both", alpha=.3)
 
         time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         fig.tight_layout()
@@ -1394,25 +1395,27 @@ class SurveyTEM(SurveyBase):
 
         fig, ax = plt.subplots(1, 2, figsize=(12, 6))
         ax[0].plot(roughness_values, rms_values, 'o', label='Original data')
-        for i in np.linspace(0, len(lambda_values) - 1, 5).astype(int):
+        for i in np.arange(len(lambda_values)):
             ax[0].annotate(f'{lambda_values[i]:.0f}', (roughness_values[i], rms_values[i]), fontsize=8, ha='right',
                            textcoords="offset points", xytext=(10, 10))
         ax[0].vlines(max_curvature_roughness, rms_values.min(), rms_values.max(), colors='r', linestyles='--',
                      label='Optimum at lambda = {:.2f}'.format(opt_lambda))
-        ax[0].set_xlabel('roughness')
-        ax[0].set_ylabel('rms')
-        ax[0].set_title('RMS/Smoothness curve')
+        ax[0].set_xlabel('Roughness')
+        ax[0].set_ylabel('RMS')
+        ax[0].set_title(f'L-Curve (Sounding: {sounding})')
+        ax[0].grid(True, which="both", alpha=.3)
         ax[0].legend()
 
         ax[1].plot(roughness_values, curvature_values, 'o', label='Curvature')
-        for i in np.linspace(0, len(lambda_values) - 1, 5).astype(int):
+        for i in np.arange(len(lambda_values)):
             ax[1].annotate(f'{lambda_values[i]:.0f}', (roughness_values[i], curvature_values[i]), fontsize=8, ha='right',
                            textcoords="offset points", xytext=(10, 10))
         ax[1].vlines(max_curvature_roughness, curvature_values.min(), curvature_values.max(), colors='r', linestyles='--',
                      label='Max curvature at lambda = {:.2f}'.format(opt_lambda))
-        ax[1].set_xlabel('roughness')
+        ax[1].set_xlabel('Roughness')
         ax[1].set_ylabel('Curvature')
-        ax[1].set_title('Curvature of the RMS/Smoothness curve')
+        ax[1].set_title('Curvature of the L-Curve')
+        ax[1].grid(True, which="both", alpha=.3)
 
         time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         fig.tight_layout()
@@ -1499,16 +1502,15 @@ class SurveyTEM(SurveyBase):
 
         fig, ax = plt.subplots(1, 1, figsize=(6, 6))
         ax.plot(roughness_values, rms_values, 'o', label='Original data')
-        for i in np.linspace(0, len(lambda_values) - 1, 5).astype(int):
+        for i in np.arange(0, len(lambda_values), step=2):
             ax.annotate(f'{lambda_values[i]:.0f}', (roughness_values[i], rms_values[i]), fontsize=8, ha='right',
                            textcoords="offset points", xytext=(10, 10))
         ax.vlines(opt_point[0], rms_values.min(), rms_values.max(), colors='r', linestyles='--',
                      label='Optimum at lambda = {:.2f}'.format(opt_lambda))
-        ax.set_xlabel('roughness')
-        ax.set_ylabel('rms')
-        ax.set_title('RMS/Smoothness curve')
-        ax.grid(True)
-        ax.legend()
+        ax.set_xlabel('Roughness')
+        ax.set_ylabel('RMS')
+        ax.set_title(f'Sounding: {sounding}')
+        ax.grid(True, which="both", alpha=.3)
 
         time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         fig.tight_layout()
@@ -1549,15 +1551,15 @@ class SurveyTEM(SurveyBase):
         if roughness_values.size != rms_values.size:
             self.logger.error('l_curve_plot: Lengths of points not matched.')
             return
-        ax.plot(roughness_values, rms_values, 'o', label='Original data')
+        ax.plot(roughness_values, rms_values, '.', label='L-Curve')
         for i in np.arange(len(lambda_values)):
             ax.annotate(f'{lambda_values[i]:.0f}', (roughness_values[i], rms_values[i]), fontsize=8, ha='right',
                            textcoords="offset points", xytext=(10, 10))
-        ax.set_xlabel('roughness')
-        ax.set_ylabel('rms')
-        ax.set_title('RMS/Smoothness curve')
+        ax.set_xlabel('Roughness')
+        ax.set_ylabel('RMS')
+        ax.set_title(f'Sounding: {sounding}')
         ax.legend()
-        ax.grid(True)
+        ax.grid(True, which="both", alpha=.3)
 
         time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         fig.tight_layout()
@@ -1596,9 +1598,12 @@ class SurveyTEM(SurveyBase):
                                          layers=layers, max_depth=max_depth, filter_times=filter_times)
 
         ax = fig.get_axes()[0]
-        ax.plot(*point_grad, 'd', label='Gradient-Based Curvature')
-        ax.plot(*point_cubic, 's', label='Cubic_Spline-Based Curvature')
-        ax.plot(*point_golden, 'x', label='Golden Section Search')
+        ax.plot(*point_grad, 'd', label=f'Gradient-Based Curvature: {opt_grad:.2f}')
+        ax.plot(*point_cubic, 's', label=f'Cubic-Spline-Based Curvature: {opt_cubic:.2f}')
+        ax.plot(*point_golden, 'x', label=f'Golden Section Search: {opt_golden:.2f}')
+        ax.set_title(f'Different Optimal $\lambda$-Values (Sounding: {sounding})', fontweight='bold')
+        ax.set_xlabel('Roughness ($\Phi_{model}$)')
+        ax.set_ylabel('Data-Misfit (RMS)')
         ax.legend()
 
         time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
@@ -1608,7 +1613,6 @@ class SurveyTEM(SurveyBase):
             file_name = f'lambda_analysis_comparison_{time}_{sounding}_{filter_times[0]}_{filter_times[1]}.png' if fname is None else fname
             fig.savefig(self._folder_structure.get(
                 'data_inversion_analysis') / file_name)
-        return fig
 
     def analyse_inversion_plot(self, sounding: str,
                            layers,
@@ -1673,6 +1677,7 @@ class SurveyTEM(SurveyBase):
             ax2[i].grid(True, which="both", alpha=.3)
 
         time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        fig1.suptitle(f'Sounding: {sounding}', fontweight='bold', fontsize=18)
         fig1.tight_layout()
         fig1.show()
         fig2.tight_layout()
@@ -1792,27 +1797,38 @@ class SurveyTEM(SurveyBase):
 
         ax[3].plot(roughness_values, rms_values, 'o', label='L-Curve')
         ax[3].plot(roughness, abs_rms, 's', label=f'Optimal Lambda: {lam}')
-        ax[3].set_xlabel('roughness')
-        ax[3].set_ylabel('rms')
-        ax[3].set_title('L-Curve', fontsize=18, pad=12)
-        ax[3].tick_params(axis='both', which='major', labelsize=14)
-        ax[3].legend()
+        for i in np.arange(len(lambda_values)):
+            ax[3].annotate(f'{lambda_values[i]:.0f}', (roughness_values[i], rms_values[i]), fontsize=8, ha='right',
+                        textcoords="offset points", xytext=(10, 10))
+        ax[3].set_xlabel('Roughness ($\Phi_{model}$)')
+        ax[3].set_ylabel('Data-Misfit (RMS)')
         ax[3].grid(True, which="both", alpha=.3)
 
-        for a, title, pos in zip(ax[:-1], ['Impulse Response', unit_title, 'Model of {} at Depth'.format(unit_title_mod)], ['lower left', 'lower {}'.format(pos_1), 'lower {}'.format(pos_2)]):
+        packed_list = zip(
+            ax,
+            ['Impulse Response', unit_title, 'Model of {} at Depth'.format(unit_title_mod), 'L-Curve'],
+            ['lower left', 'lower {}'.format(pos_1), 'lower {}'.format(pos_2), 'lower left'],
+            ['a', 'b', 'c', 'd']
+        )
+
+        for a, title, pos, label in packed_list:
             a.legend(loc=pos)
             a.set_title(title, fontsize=18, pad=12)
             a.tick_params(axis='both', which='major', labelsize=14)
+            a.text(0.96, 0.08, f'({label})', transform=a.transAxes, fontsize=18, zorder=5,
+                   verticalalignment='top', horizontalalignment='right',
+                   bbox=dict(facecolor='xkcd:light grey', boxstyle='round,pad=0.5'))
 
-        if layer_type == 'linear':
-            fig.suptitle(f'Lambda = {lam:<8.0f} Layer Thickness = {layers:<.2f}m\n\u03C7\u00B2 = {chi2:<8.2f} Relative RMS = {rrms:<.2f}%', fontsize=22, fontweight='bold')
-        else:
-            fig.suptitle(f'Lambda = {lam:<8.0f} Layer Thickness = {layer_type}\n\u03C7\u00B2 = {chi2:<8.2f} Relative RMS = {rrms:<.2f}%', fontsize=22, fontweight='bold')
-
+        fig.suptitle(
+            f'Sounding: {sounding:<6}\t$\lambda$: {lam:<4.0f}\n'
+            f'Relative RMS: {rrms:<.2f}%\t$\chi^2$: {chi2:<8.2f}',
+            fontsize=22,
+            fontweight='bold'
+        )
         fig.show()
 
         target_dir = self._folder_structure.get('data_inversion_plot')
         time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         if fname or fname is None:
-            file_name = f'{sounding}_{time}_{unit}.png' if fname is None else f'{sounding}_{fname}'
+            file_name = f'opt_{sounding}_{time}_{unit}.png' if fname is None else f'{sounding}_{fname}'
             fig.savefig(target_dir / file_name)

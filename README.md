@@ -1,5 +1,3 @@
-from scipy.constants import survey_footfrom Demos.win32console_demo import coord
-
 # SurveyTEM Package
 
 ## Overview
@@ -14,14 +12,6 @@ The `SurveyTEM` package is designed for processing and analyzing Transient Elect
 - **Data Inversion**: Perform inversion to obtain subsurface resistivity models.
 - **Data Forward Modeling**: Generate forward models for TEM data.
 - **Visualization**: Plot raw, filtered, and inverted data.
-
-## Installation
-
-To install the package, use the following command:
-
-```bash
-pip install -r requirements.txt
-```
 
 ## Usage
 
@@ -132,6 +122,3 @@ The provided model of the subsurface consists of 3 Layers with resistivities:
 - 10 Ohm\*m (between 0 and 15 meters)
 - 100 Ohm\*m (between 15 and 25 meters)
 - 10 Ohm\*m (between 25 and 30 meters)
-
-## Contributing
-Contributions are welcome! Please submit a pull request or open an issue to discuss your ideas. 
