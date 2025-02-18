@@ -1216,7 +1216,7 @@ class SurveyTEM(SurveyBase):
         target_dir = self._folder_structure.get('data_inversion_plot')
         time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         if fname or fname is None:
-            file_name = f'{sounding}_{time}_{unit}.png' if fname is None else f'{sounding}_{fname}'
+            file_name = f'{sounding}_{time}_{unit}.png' if fname is None else fname
             fig.savefig(target_dir / file_name)
 
     def plot_inversion(self, subset:list=None,
@@ -1829,5 +1829,5 @@ class SurveyTEM(SurveyBase):
         target_dir = self._folder_structure.get('data_inversion_plot')
         time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         if fname or fname is None:
-            file_name = f'opt_{sounding}_{time}_{unit}.png' if fname is None else f'{sounding}_{fname}'
+            file_name = f'opt_{sounding}_{time}_{unit}.png' if fname is None else fname
             fig.savefig(target_dir / file_name)
