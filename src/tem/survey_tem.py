@@ -1200,16 +1200,15 @@ class SurveyTEM(SurveyBase):
         packed_list = zip(
             ax,
             ['Impulse Response', unit_title, 'Model of {} at Depth'.format(unit_title_mod)],
-            ['lower left', 'lower {}'.format(pos_1), 'lower {}'.format(pos_2)],
             ['a', 'b', 'c']
         )
-        for a, title, pos, label in packed_list:
-            a.legend(loc=pos)
+        for a, title, label in packed_list:
+            a.legend(loc='lower left')
             a.set_title(title, fontsize=18, pad=12)
             a.tick_params(axis='both', which='major', labelsize=14)
-            a.text(0.96, 0.08, f'({label})', transform=a.transAxes, fontsize=18, zorder=5,
+            a.text(0.96, 0.12, f'({label})', transform=a.transAxes, fontsize=18, zorder=5,
                    verticalalignment='top', horizontalalignment='right',
-                   bbox=dict(facecolor='xkcd:light grey', boxstyle='round,pad=0.5'))
+                   bbox=dict(facecolor='xkcd:light grey', boxstyle='round,pad=0.5', alpha=0.3))
 
         fig.suptitle(f'$\lambda$ = {lam:<8.0f} Sounding = {sounding}\n$\chi^2$ = {chi2:<8.2f} Relative RMS = {rrms:<.2f}%', fontsize=22, fontweight='bold')
         fig.show()
@@ -1792,32 +1791,32 @@ class SurveyTEM(SurveyBase):
         pygimli.viewer.mpl.drawModel1D(ax[2], thks, model_unit, color='k', label='pyGIMLI')
         ax[2].set_xlabel(unit_label_mod, fontsize=16)
         ax[2].set_ylabel('depth [m]', fontsize=16)
-        ax[2].yaxis.tick_right()
-        ax[2].yaxis.set_label_position("right")
+
 
         ax[3].plot(roughness_values, rms_values, 'o', label='L-Curve')
         ax[3].plot(roughness, abs_rms, 's', label=f'Optimal Lambda: {lam}')
         for i in np.arange(len(lambda_values)):
             ax[3].annotate(f'{lambda_values[i]:.0f}', (roughness_values[i], rms_values[i]), fontsize=8, ha='right',
                         textcoords="offset points", xytext=(10, 10))
-        ax[3].set_xlabel('Roughness ($\Phi_{model}$)')
-        ax[3].set_ylabel('Data-Misfit (RMS)')
+        ax[3].set_xlabel('Roughness ($\Phi_{model}$)', fontsize=16)
+        ax[3].set_ylabel('Data-Misfit (RMS)', fontsize=16)
+        ax[3].yaxis.tick_right()
+        ax[3].yaxis.set_label_position("right")
         ax[3].grid(True, which="both", alpha=.3)
 
         packed_list = zip(
             ax,
             ['Impulse Response', unit_title, 'Model of {} at Depth'.format(unit_title_mod), 'L-Curve'],
-            ['lower left', 'lower {}'.format(pos_1), 'lower {}'.format(pos_2), 'lower left'],
             ['a', 'b', 'c', 'd']
         )
 
-        for a, title, pos, label in packed_list:
-            a.legend(loc=pos)
+        for a, title, label in packed_list:
+            a.legend(loc='lower left')
             a.set_title(title, fontsize=18, pad=12)
             a.tick_params(axis='both', which='major', labelsize=14)
-            a.text(0.96, 0.08, f'({label})', transform=a.transAxes, fontsize=18, zorder=5,
+            a.text(0.96, 0.1, f'({label})', transform=a.transAxes, fontsize=18, zorder=5,
                    verticalalignment='top', horizontalalignment='right',
-                   bbox=dict(facecolor='xkcd:light grey', boxstyle='round,pad=0.5'))
+                   bbox=dict(facecolor='xkcd:light grey', boxstyle='round,pad=0.5', alpha=0.3))
 
         fig.suptitle(
             f'Sounding: {sounding:<6}\t$\lambda$: {lam:<4.0f}\n'
