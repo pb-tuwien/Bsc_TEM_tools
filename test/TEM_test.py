@@ -1,6 +1,6 @@
 #%% Import class
 
-import src.tem.survey_tem as st
+import TEM_tools.tem.survey_tem as st
 import numpy as np
 
 #%% Test Survey

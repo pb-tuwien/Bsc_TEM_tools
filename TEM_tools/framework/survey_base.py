@@ -8,11 +8,11 @@ Created on Sun Nov 03 17:31:37 2024
 #%% Import modules
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 import pandas as pd
-from src.core.base import BaseFunction
-from src.core.gp_coords import GPcoords
-from src.core.gp_folder import GPfolder
+from TEM_tools.core.base import BaseFunction
+from TEM_tools.core.gp_coords import GPcoords
+from TEM_tools.core.gp_folder import GPfolder
 
 #%% Aufgaben
 
@@ -28,7 +28,7 @@ class SurveyBase(BaseFunction):
     It gives the user a structured way to handle survey coordinates.
     For handling survey data, the user should go to the daughter classes.
     """
-    def __init__(self, project_dir: [Path, str], dir_structure: [str, dict]) -> None:
+    def __init__(self, project_dir: Union[Path, str], dir_structure: Union[str, dict]) -> None:
         """
         Initializes the SurveyBase class.
 
@@ -120,7 +120,7 @@ class SurveyBase(BaseFunction):
         """
         return self._coordinates_grouped
 
-    def coords_read(self, coords: [Path, str] = None, sep: str = ',') -> None:
+    def coords_read(self, coords: Union[Path, str] = None, sep: str = ',') -> None:
         """
         Reads the coordinates from a file.
         If no file is given, the function will look for raw and processed coordinate files in the directory structure.
@@ -293,7 +293,7 @@ class SurveyBase(BaseFunction):
                 self._gp_coords.write(file_path=proc_file)
                 self.logger.info(f'coords_extract_save: Processed coordinates saved to {proc_file}')
 
-    def coords_create_dummy(self, number_electrodes: int, separation: [int, float]) -> pd.DataFrame:
+    def coords_create_dummy(self, number_electrodes: int, separation: Union[int, float]) -> pd.DataFrame:
         """
         Creates dummy coordinates DataFrame.
         (using the GPcoords class)

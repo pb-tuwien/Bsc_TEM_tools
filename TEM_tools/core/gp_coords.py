@@ -8,7 +8,7 @@ Created on Sat Nov 02 17:45:22 2024
 #%% Import modules
 
 from pathlib import Path
-from typing import Optional, Literal
+from typing import Optional, Literal, Union
 import numpy as np
 import pandas as pd
 import re
@@ -16,7 +16,7 @@ import yaml
 from pyproj import Transformer
 from tqdm import tqdm
 
-from src.core.base import BaseFunction
+from TEM_tools.core.base import BaseFunction
 
 #%% Aufgaben
 
@@ -28,7 +28,7 @@ class GPcoords(BaseFunction):
     """
     This class handles the coordinates of geophysical data.
     """
-    def __init__(self, data: Optional[pd.DataFrame] = None, log_path: [Path, str]=  None) -> None:
+    def __init__(self, data: Optional[pd.DataFrame] = None, log_path: Union[Path, str]=  None) -> None:
         """
         This method initializes the GPcoords class.
         It contains a list with the necessary columns for the _coordinates_proc.
@@ -107,7 +107,7 @@ class GPcoords(BaseFunction):
         """
         return self._coordinate_path
 
-    def read(self, file_path: [Path, str], sep: str = ',') -> None:
+    def read(self, file_path: Union[Path, str], sep: str = ',') -> None:
         """
         This function reads a file with _coordinates_proc and stores it in self._coordinates_proc.
 
@@ -181,7 +181,7 @@ class GPcoords(BaseFunction):
             self._coordinates['Name'] = self._coordinates['Name'].str.replace(key, value)
         self.logger.info(f'rename_points: Renaming of points was successful.')
 
-    def sort(self, inplace: [Literal[True], Literal[False]] = True, **kwargs) -> Optional[pd.DataFrame]:
+    def sort(self, inplace: bool = True, **kwargs) -> Optional[pd.DataFrame]:
         """
         This function sorts the _coordinates_proc in self._coordinates_proc.
         (using pandas.DataFrame.sort_values)
@@ -204,7 +204,7 @@ class GPcoords(BaseFunction):
             return self._coordinates.sort_values(**kwargs)
 
     @staticmethod
-    def _split_name(name: str, pattern: str) -> [list, tuple]:
+    def _split_name(name: str, pattern: str) -> Union[list, tuple]:
         """
         This function splits a name using a regex pattern.
 
@@ -264,7 +264,7 @@ class GPcoords(BaseFunction):
         else:
             return df
 
-    def write(self, file_path: [Path, str], sep: str = ',') -> None:
+    def write(self, file_path: Union[Path, str], sep: str = ',') -> None:
         """
         This function saves the _coordinates_proc in self._coordinates_proc to a file.
         (using pandas.DataFrame.to_csv)
@@ -462,7 +462,7 @@ class GPcoords(BaseFunction):
 
 
     @staticmethod
-    def create_dummy(elec_sep: [int, float], elec_num: int) -> pd.DataFrame:
+    def create_dummy(elec_sep: Union[int, float], elec_num: int) -> pd.DataFrame:
         """
         This function creates a dummy _coordinates_proc for testing purposes.
 

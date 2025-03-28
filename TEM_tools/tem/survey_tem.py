@@ -18,16 +18,16 @@ import matplotlib.pyplot as plt
 import pygimli.viewer.mpl
 from scipy.interpolate import CubicSpline
 
-from src.core.gp_file import GPfile
-from src.tem.TEM_frwrd.TEM_inv import tem_inv_smooth1D
-from src.framework.survey_base import SurveyBase
+from TEM_tools.core.gp_file import GPfile
+from TEM_tools.tem.TEM_frwrd.TEM_inv import tem_inv_smooth1D
+from TEM_tools.framework.survey_base import SurveyBase
 
 warnings.filterwarnings('ignore')
 
 #%% SurveyTEM class
 
 class SurveyTEM(SurveyBase):
-    def __init__(self, project_directory: [Path, str], dir_template: str = 'tem_default') -> None:
+    def __init__(self, project_directory: Union[Path, str], dir_template: str = 'tem_default') -> None:
         
         self._data_modelled = None
         self._mu = 4 * np.pi * 10 ** (-7)
@@ -180,7 +180,7 @@ class SurveyTEM(SurveyBase):
 
         self.logger.info('Data check successful.')
 
-    def data_read(self, data: [Path, str] = None) -> None:
+    def data_read(self, data: Union[Path, str] = None) -> None:
         """
         This function reads the raw data from the given file path.
         If no file path is given, it tries to read the raw data from the directory structure.
@@ -376,7 +376,7 @@ class SurveyTEM(SurveyBase):
 
     def _filter_sounding(self, data_dict: dict,
                          filter_times: Tuple[Union[float, int], Union[float, int]],
-                         noise_floor: [float, int]) -> dict:
+                         noise_floor: Union[float, int]) -> dict:
         """
         This function filters one sounding based on the given time range and noise floor.
 
@@ -452,7 +452,7 @@ class SurveyTEM(SurveyBase):
         return filtered_dict
 
     def data_filter(self, filter_times: Tuple[Union[float, int], Union[float, int]] = (7, 700),
-                    noise_floor: [float, int] = 0.025,
+                    noise_floor: Union[float, int] = 0.025,
                     subset: list = None) -> None:
         """
         This function filters the data dictionary based on the given time range and noise floor.
@@ -642,13 +642,13 @@ class SurveyTEM(SurveyBase):
 
         return df
 
-    def data_inversion(self, lam: [int, float] = 600,
+    def data_inversion(self, lam: Union[int, float] = 600,
                        layer_type: str = 'linear',
-                       layers: [int, float, dict, np.ndarray] = 4.5,
-                       max_depth: [float, int] = None,
+                       layers: Union[int, float, dict, np.ndarray] = 4.5,
+                       max_depth: Union[float, int] = None,
                        filter_times: Tuple[Union[float, int], Union[float, int]] = (7, 700),
                        start_model: np.ndarray = None,
-                       noise_floor: [float, int] = 0.025,
+                       noise_floor: Union[float, int] = 0.025,
                        subset: list = None,
                        verbose: bool = True) -> None:
         if self._data_preprocessed is None:
@@ -790,11 +790,11 @@ class SurveyTEM(SurveyBase):
 
     def data_forward(self,
                        layer_type: str = 'linear',
-                       layers: [int, float, dict, np.ndarray] = 4.5,
-                       max_depth: [float, int] = None,
+                       layers: Union[int, float, dict, np.ndarray] = 4.5,
+                       max_depth: Union[float, int] = None,
                        filter_times: Tuple[Union[float, int], Union[float, int]] = (5, 1000),
                        start_model: np.ndarray = None,
-                       noise_floor: [float, int] = 0.025,
+                       noise_floor: Union[float, int] = 0.025,
                        subset: list = None,
                        verbose: bool = True) -> None:
 
@@ -985,7 +985,7 @@ class SurveyTEM(SurveyBase):
 
     def plot_raw_filtered(self, subset: list = None, unit: str = 'rhoa', scale: str = 'log',
                           filter_times: Tuple[Union[int, float], Union[int, float]] = (7, 700),
-                          noise_floor: [int, float] = 0.025, legend=True,
+                          noise_floor: Union[int, float] = 0.025, legend=True,
                           fname: Union[str, bool] = None) -> None:
 
         plot_list = [point for point in self._data_raw.keys() if subset is None or point in subset]
@@ -1125,9 +1125,9 @@ class SurveyTEM(SurveyBase):
             fig.savefig(target_dir / file_name)
 
     def _plot_one_inversion(self, sounding,
-                           lam: [int, float] = 600,
+                           lam: Union[int, float] = 600,
                            filter_times: Tuple[Union[float, int], Union[float, int]] = (7, 700),
-                           noise_floor: [int, float] = 0.025,
+                           noise_floor: Union[int, float] = 0.025,
                            unit: str = 'rhoa',
                            fname: Union[str, bool] = None) -> None:
 
@@ -1220,12 +1220,12 @@ class SurveyTEM(SurveyBase):
             fig.savefig(target_dir / file_name)
 
     def plot_inversion(self, subset:list=None,
-                       lam: [int, float] = 600,
+                       lam: Union[int, float] = 600,
                        layer_type: str = 'linear',
-                       layers: [int, float, dict, np.ndarray] = 4.5,
-                       max_depth: [float, int] = None,
+                       layers: Union[int, float, dict, np.ndarray] = 4.5,
+                       max_depth: Union[float, int] = None,
                        start_model: np.ndarray = None,
-                       noise_floor: [float, int] = 0.025,
+                       noise_floor: Union[float, int] = 0.025,
                        unit: str = 'rhoa',
                        filter_times=(7, 700),
                        verbose: bool = True,
@@ -1619,7 +1619,7 @@ class SurveyTEM(SurveyBase):
                            test_range:tuple=(10, 10000, 30),
                            layer_type:str = 'linear',
                            filter_times=(7, 700),
-                           noise_floor: [int, float] = 0.025,
+                           noise_floor: Union[int, float] = 0.025,
                            unit: str = 'rhoa',
                                fname: Union[str, bool] = None) -> None:
 
@@ -1694,9 +1694,9 @@ class SurveyTEM(SurveyBase):
                                  lam: Union[int, float] = 600,
                                  layer_type: str = 'linear',
                                  layers: Union[int, float, dict, np.ndarray] = 4.5,
-                                 max_depth: [float, int] = None,
+                                 max_depth: Union[float, int] = None,
                                  start_model: np.ndarray = None,
-                                 noise_floor: [float, int] = 0.025,
+                                 noise_floor: Union[float, int] = 0.025,
                                  test_range: tuple = (10, 10000, 30),
                                  unit: str = 'rhoa',
                                  filter_times=(7, 700),
