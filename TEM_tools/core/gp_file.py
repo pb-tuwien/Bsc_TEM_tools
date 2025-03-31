@@ -12,9 +12,9 @@ import yaml
 from pathlib import Path
 import pandas as pd
 import numpy as np
-from typing import Optional, TextIO
+from typing import Optional, TextIO, Union
 
-from src.core.base import BaseFunction
+from TEM_tools.core.base import BaseFunction
 
 # %% GPfile class
 
@@ -127,7 +127,7 @@ class GPfile(BaseFunction):
         else:
             raise FileNotFoundError('Make sure "templates/file_type" directory exists.')
 
-    def _check_extension(self, file_path: [str, Path]) -> str:
+    def _check_extension(self, file_path: Union[str, Path]) -> str:
         """
         Checks the extension of the file.
 
@@ -163,7 +163,7 @@ class GPfile(BaseFunction):
                 raise ValueError(f'_check_extension: {file_path} is neither a file nor a directory.')
         return extensions
 
-    def _choose_file_type(self, file_path: [str, Path], chosen_template: str = None) -> dict:
+    def _choose_file_type(self, file_path: Union[str, Path], chosen_template: str = None) -> dict:
         """
         Chooses the file type based on the file extension.
 
@@ -368,7 +368,7 @@ class GPfile(BaseFunction):
         df = self.safe_to_numeric(df)
         return df
 
-    def _parse_line(self, template_dict: dict, lines: list, start_index: int) -> [str, list]:
+    def _parse_line(self, template_dict: dict, lines: list, start_index: int) -> Union[str, list]:
         """
         Parses a line block from the file.
 
@@ -406,7 +406,7 @@ class GPfile(BaseFunction):
                 line_block = [self._type_changer(subtype, x) for x in line_block]
             return line_block
 
-    def _find_parsing_type(self, template_dict: dict, lines: list, start_index: int) -> [dict, pd.DataFrame, str, list]:
+    def _find_parsing_type(self, template_dict: dict, lines: list, start_index: int) -> Union[dict, pd.DataFrame, str, list]:
         """
         Finds the parsing type of the block and applies it.
 
@@ -440,7 +440,7 @@ class GPfile(BaseFunction):
                 self.logger.error('find_parsing_type: Template type was not recognized.')
             raise KeyError('find_parsing_type: Template type was not recognized.')
 
-    def read(self, file_path: [str, Path], file_type: str = None, verbose: bool = None) -> Optional[dict]:
+    def read(self, file_path: Union[str, Path], file_type: str = None, verbose: bool = None) -> Optional[dict]:
         """
         Reads the file and parses the data.
         If no file type is chosen, the file type is chosen based on the file extension.
@@ -594,7 +594,7 @@ class GPfile(BaseFunction):
         for index, row in data.iterrows():
             file_.write(f'{delimiter.join(map(str, row))}\n')
 
-    def _write_line(self, template_dict: dict, data: [str, list], file_: TextIO) -> None:
+    def _write_line(self, template_dict: dict, data: Union[str, list], file_: TextIO) -> None:
         """
         Writes a line to the file.
 
@@ -623,7 +623,7 @@ class GPfile(BaseFunction):
             for line in data:
                 file_.write(f'{line}\n')
 
-    def _find_writing_type(self, template_dict: dict, data: [str, list, dict, pd.DataFrame], file_: TextIO) -> None:
+    def _find_writing_type(self, template_dict: dict, data: Union[str, list, dict, pd.DataFrame], file_: TextIO) -> None:
         """
         Finds the writing type of the block and applies it.
 
@@ -656,7 +656,7 @@ class GPfile(BaseFunction):
                 self.logger.error('find_writing_type: Template type was not recognized.')
             raise KeyError('find_writing_type: Template type was not recognized.')
 
-    def write(self, file_path: [str, Path], template: str = None, data: dict = None, verbose: bool = None) -> None:
+    def write(self, file_path: Union[str, Path], template: str = None, data: dict = None, verbose: bool = None) -> None:
         """
         Writes the data to the file.
 

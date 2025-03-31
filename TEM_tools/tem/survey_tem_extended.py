@@ -11,19 +11,19 @@ from scipy.interpolate import griddata
 from scipy.optimize import curve_fit #todo: schauen ob man das sinnvoll einbauen kann?? @jakob
 from pathlib import Path
 import warnings
-from typing import Any
+from typing import Any, Union
 import numpy as np
 import pandas as pd
 # from datetime import datetime
 import matplotlib.pyplot as plt
-import src.tem.survey_tem as st
+import TEM_tools.tem.survey_tem as st
 
 warnings.filterwarnings('ignore')
 
 #%% ExtendedSurveyTEM class
 
 class ExtendedSurveyTEM(st.SurveyTEM):
-    def __init__(self, project_directory: [Path, str], dir_template: str = 'tem_default') -> None:
+    def __init__(self, project_directory: Union[Path, str], dir_template: str = 'tem_default') -> None:
         super().__init__(project_directory=project_directory, dir_template=dir_template)
 
     def choose_from_csv(self, filepath: Path, chosen_points: tuple = (), line_name: str = '') -> list[Any]:
@@ -67,7 +67,7 @@ class ExtendedSurveyTEM(st.SurveyTEM):
     #     self.plot_inversion(subset=inversion_list, lam=lam, layer_type=layer_type, unit=unit, layers=layers, max_depth=max_depth, filter_times=filter_times)
 
     @staticmethod
-    def _find_inflection_index(xvalues: [np.ndarray, list], yvalues: [np.ndarray, list]) -> list:
+    def _find_inflection_index(xvalues: Union[np.ndarray, list], yvalues: Union[np.ndarray, list]) -> list:
         x_array = np.array(xvalues)
         y_array = np.array(yvalues)
         first_diff = np.diff(y_array) / np.diff(x_array)
@@ -76,7 +76,7 @@ class ExtendedSurveyTEM(st.SurveyTEM):
         # inflection_value_index = xvalues[inflection_indices]
         return [inflection_index, first_diff, second_diff]
 
-    def _find_inflection_point(self, xvalues: [np.ndarray, list], yvalues: [np.ndarray, list]) -> tuple:
+    def _find_inflection_point(self, xvalues: Union[np.ndarray, list], yvalues: Union[np.ndarray, list]) -> tuple:
         inflection_index, first_diff, second_diff = self._find_inflection_index(xvalues, yvalues)
         start_x = xvalues[inflection_index]
         start_y = second_diff[inflection_index]

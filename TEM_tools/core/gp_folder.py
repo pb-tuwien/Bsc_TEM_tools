@@ -11,8 +11,9 @@ from typing import Optional
 import yaml
 from pathlib import Path
 import shutil
+from typing import Union
 
-from src.core.base import BaseFunction
+from TEM_tools.core.base import BaseFunction
 
 # %% GPfolder class
 
@@ -20,7 +21,7 @@ class GPfolder(BaseFunction):
     """
     This class creates a directory structure based on a template.
     """
-    def __init__(self, root_path: [Path, str], template: [str, dict]) -> None:
+    def __init__(self, root_path: Union[Path, str], template: Union[str, dict]) -> None:
         """
         This method initializes the GPfolder class.
         It creates the main folders of the directory structure.
@@ -107,7 +108,7 @@ class GPfolder(BaseFunction):
         else:
             raise FileNotFoundError('Make sure "templates/dir_structure" directory exists.')
 
-    def _choose_template(self, template: [str, dict]):
+    def _choose_template(self, template: Union[str, dict]):
         """
         Chooses the template for the directory structure.
 
@@ -189,7 +190,7 @@ class GPfolder(BaseFunction):
 
         self._folder_structure[directory] = sub_structure
 
-    def move_files(self, from_path: [Path, str], to_path: [Path, str]) -> None:
+    def move_files(self, from_path: Union[Path, str], to_path: Union[Path, str]) -> None:
         """
         Moves files from one directory to another.
 
@@ -226,7 +227,7 @@ class GPfolder(BaseFunction):
         else:
             self.logger.warning('move_files: No files were found at the from_path.')
 
-    def copy_files(self, from_path: [Path, str], to_path: [Path, str]) -> None:
+    def copy_files(self, from_path: Union[Path, str], to_path: Union[Path, str]) -> None:
         """
         Copies files from one directory to another.
 
