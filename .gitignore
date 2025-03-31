@@ -1,4 +1,4 @@
 .idea/
 .venv/
 .vscode/
-*/TEM-data/*
+/TEM-data/*
