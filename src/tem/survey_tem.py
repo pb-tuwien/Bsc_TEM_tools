@@ -1196,6 +1196,7 @@ class SurveyTEM(SurveyBase):
         ax[2].set_ylabel('depth [m]', fontsize=16)
         ax[2].yaxis.tick_right()
         ax[2].yaxis.set_label_position("right")
+        ax[2].set_xlim(15,24)
 
         packed_list = zip(
             ax,
@@ -1791,6 +1792,7 @@ class SurveyTEM(SurveyBase):
         pygimli.viewer.mpl.drawModel1D(ax[2], thks, model_unit, color='k', label='pyGIMLI')
         ax[2].set_xlabel(unit_label_mod, fontsize=16)
         ax[2].set_ylabel('depth [m]', fontsize=16)
+        ax[2].set_xlim(15,24)
 
 
         ax[3].plot(roughness_values, rms_values, 'o', label='L-Curve')
