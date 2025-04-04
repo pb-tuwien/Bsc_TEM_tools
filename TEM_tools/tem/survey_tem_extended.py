@@ -264,7 +264,7 @@ class ExtendedSurveyTEM(st.SurveyTEM):
                       filter_times=filter_times)
 
     # todo: implement the 2D-parts (@jakob)
-    def inversion_plot_2D_section(self, unit='rhoa', lam=600, lay_thk=3, save=True, max_depth=50):
+    def inversion_plot_2D_section(self, inversion_soundings, unit='rhoa', lam=600, lay_thk=3, save=True, max_depth=50):
         fig, ax = plt.subplots(figsize=(10, 4))
         if unit == 'rhoa':
             unit_label = r'$\rho$ [$\Omega$m]'
@@ -276,22 +276,13 @@ class ExtendedSurveyTEM(st.SurveyTEM):
         all_xcoords = []
         all_ycoords = []
         all_values = []
-        if self.inversion_results is not None:
-            for inv_res, lmnt in zip(self.inversion_results, self.list_files):
-                thks, res_mdld = inv_res
-                xcoord = np.full(len(res_mdld), lmnt.posX)
-                ycoord = np.arange(thks[0], thks[0] + len(res_mdld) * thks[0], thks[0])
-                all_xcoords.append(xcoord)
-                all_ycoords.append(ycoord)
-                all_values.append(res_mdld)
-        else:
-            for lmnt in self.list_files:
-                _, thks, res_mdld, _, _, _, _, _, _, _ = lmnt.inversion(lam=lam, lay_thk=lay_thk)
-                xcoord = np.full(len(res_mdld), lmnt.posX)
-                ycoord = np.arange(thks[0], thks[0] + len(res_mdld) * thks[0], thks[0])
-                all_xcoords.append(xcoord)
-                all_ycoords.append(ycoord)
-                all_values.append(res_mdld)
+        for lmnt in inversion_soundings:
+            self.data_inversion(subset = [lmnt], lam=lam, lay_thk=lay_thk)
+            xcoord = np.full(len(res_mdld), lmnt.posX)
+            ycoord = np.arange(thks[0], thks[0] + len(res_mdld) * thks[0], thks[0])
+            all_xcoords.append(xcoord)
+            all_ycoords.append(ycoord)
+            all_values.append(res_mdld)
 
         # Concatenate all x, y, and value arrays
         xcoords = np.concatenate(all_xcoords)

@@ -1148,6 +1148,7 @@ class SurveyTEM(SurveyBase):
         inversion_data = inverted_data.get('data')
         inversion_metadata = inverted_data.get('metadata')
 
+
         obs_unit = filtered_data[unit]
         response_unit = inversion_data[unit].dropna()
         thks = inversion_data['modelled_thickness'].dropna()
