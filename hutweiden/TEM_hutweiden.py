@@ -264,7 +264,7 @@ print("Point Numbers:", point_numbers)
 
 #%%
 
-def inversion_plot_2D_section(lam=200, lay_thk={0:1, 5:1.5, 15:2}):
+def inversion_plot_2D_section(lam=183, lay_thk={0:1, 5:1.5, 15:2}):
     fig, ax = plt.subplots(figsize=(10, 4))
     filter_times = [10,80]
     noise_floor = 0.025
@@ -282,34 +282,21 @@ def inversion_plot_2D_section(lam=200, lay_thk={0:1, 5:1.5, 15:2}):
         resistivities.append(model_unit)
         thicknesses.append(thks)
 
-
-    # aus _plot_one_inversion
-    for i in range(len(thicknesses)):
-        thks = thicknesses[i]
-        model_unit = resistivities2d[i]
-        # Plotting the data
-        pgv.drawModel1D(ax, thks, model_unit, color='k', label='pyGIMLI')
-    ax.set_xlabel(r'resistvity ($\Omega$m)', fontsize=16)
-    ax.set_ylabel('depth (m)', fontsize=16)
-    ax.yaxis.tick_right()
-    ax.yaxis.set_label_position("right")
-    ax.set_title(f'2D Crosssection\n$\lambda$ = {lam:<8.0f} Crosssection', fontsize=22, fontweight='bold')
-
- 
-
-    plt.tight_layout()
-
-    fig.savefig('inversion_2Dsection_{}.png'.format('rhoa'))
-
-    fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=(10, 6))
     # Plotting the data
     # Customize colorbar to match the data values
+    model_unit_list, dist_list, thks_list = [], [], []
+    thks = [1, 2, 3, 4, 5, 6.5, 8.0, 9.5, 11.0]
     for sounding, dist in zip(range(11), distances):
-        thks = [1, 2, 3, 4, 5, 6.5, 8.0, 9.5, 11.0]
         model_unit = resistivities[sounding]
         dist = [dist for _ in range(len(thks))]
-        sc = ax.scatter(dist,thks, c=model_unit, cmap='viridis', s=150, label='pyGIMLI')
-    
+        for i, j, k in zip(model_unit, dist, thks):
+            model_unit_list.append(i)
+            dist_list.append(j)
+            thks_list.append(k)
+
+        
+    sc = ax.scatter(dist_list,thks_list, c=model_unit_list, cmap='viridis', s=150, label='pyGIMLI')
     
     cbar = fig.colorbar(sc, ax=ax)
     # cbar.set_ticks(np.linspace(np.min(unit_values), np.max(unit_values), num=6),
@@ -317,7 +304,7 @@ def inversion_plot_2D_section(lam=200, lay_thk={0:1, 5:1.5, 15:2}):
     cbar.set_label(r'$\rho$ ($\Omega$m)', fontsize=16)  # Set colorbar label
     ax.set_xlabel("Horizontal Distance (m)")
     ax.set_ylabel("Depth (m)")
-    ax.set_title(f"2D Crosssection with Multiple Soundings\n$\lambda$ = {lam:<8.0f}", fontsize=22, fontweight='bold')
+    ax.set_title(f"2D Crosssection with Multiple Soundings\n$\lambda$ = 183", fontsize=22, fontweight='bold')
     ax.set_ylim(-2, 12)
     for x_val, y_val, label in zip(distances, [0 for _ in range(len(distances))], intersections['Name']):
         ax.text(x_val, y_val, label, fontsize=10, color="black", ha="center", va="bottom", rotation=45)
