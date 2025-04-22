@@ -267,9 +267,9 @@ class ExtendedSurveyTEM(st.SurveyTEM):
     def inversion_plot_2D_section(self, inversion_soundings, unit='rhoa', lam=600, lay_thk=3, save=True, max_depth=50):
         fig, ax = plt.subplots(figsize=(10, 4))
         if unit == 'rhoa':
-            unit_label = r'$\rho$ [$\Omega$m]'
+            unit_label = r'$\rho$ ($\Omega$m)'
         elif unit == 'sigma_a':
-            unit_label = r'$\sigma$ [mS/m]'
+            unit_label = r'$\sigma$ (mS/m)'
         else:
             raise SyntaxError('input {} not valid for Argument unit'.format(unit))
 
@@ -293,8 +293,8 @@ class ExtendedSurveyTEM(st.SurveyTEM):
         sc = ax.scatter(xcoords, ycoords, c=unit_values, cmap='viridis', marker='o',
                         s=60)  # You can choose any colormap you like
         ax.invert_yaxis()
-        ax.set_xlabel('Distance along profile [m]', fontsize=16)
-        ax.set_ylabel('Depth [m]', fontsize=16)
+        ax.set_xlabel('Distance along profile (m)', fontsize=16)
+        ax.set_ylabel('Depth (m)', fontsize=16)
         ax.tick_params(axis='both', which='major', labelsize=14)
         ax.set_ylim(max_depth + 2)
 
@@ -335,9 +335,9 @@ class ExtendedSurveyTEM(st.SurveyTEM):
     def plot_inversion_interpolated(self, unit='rhoa', lam=600, lay_thk=4.5, save=True, max_depth=50):
         fig, ax = plt.subplots(figsize=(10, 4))
         if unit == 'rhoa':
-            unit_label = r'$\rho$ [$\Omega$m]'
+            unit_label = r'$\rho$ ($\Omega$m)'
         elif unit == 'sigma_a':
-            unit_label = r'$\sigma$ [mS/m]'
+            unit_label = r'$\sigma$ (mS/m)'
         else:
             raise SyntaxError('input {} not valid for Argument unit'.format(unit))
 
@@ -350,8 +350,8 @@ class ExtendedSurveyTEM(st.SurveyTEM):
 
         sc = ax.scatter(xi, yi, c=value_i, cmap='viridis', label='Interpolated Points', marker='s', s=7)
         ax.invert_yaxis()
-        ax.set_xlabel('Distance along profile [m]', fontsize=16)
-        ax.set_ylabel('Depth [m]', fontsize=16)
+        ax.set_xlabel('Distance along profile (m)', fontsize=16)
+        ax.set_ylabel('Depth (m)', fontsize=16)
         ax.tick_params(axis='both', which='major', labelsize=14)
         ax.set_ylim(max_depth)
 

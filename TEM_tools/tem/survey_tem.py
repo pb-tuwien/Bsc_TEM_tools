@@ -896,10 +896,10 @@ class SurveyTEM(SurveyBase):
 
         if unit == 'rhoa':
             unit_name = 'Apparent Resistivity'
-            unit_label = r'$\rho_a$ [$\Omega$m]'
+            unit_label = r'$\rho_a$ ($\Omega$m)'
         elif unit == 'sigma':
             unit_name = 'Apparent Conductivity'
-            unit_label = r'$\sigma_a$ [mS/m]'
+            unit_label = r'$\sigma_a$ (mS/m)'
         else:
             raise SyntaxError('input {} not valid for Argument unit'.format(unit))
 
@@ -964,8 +964,8 @@ class SurveyTEM(SurveyBase):
         elif fig is None or ax1 is None or ax2 is None:
             raise SyntaxError('not all necessary values for fig, ax1, ax2 were given and neither all all empty')
 
-        ax1.set_xlabel('Time [s]', fontsize=16)
-        ax1.set_ylabel(r'$\partial B_z/\partial t$ [V/m²]', fontsize=16)
+        ax1.set_xlabel('Time (s)', fontsize=16)
+        ax1.set_ylabel(r'$\partial B_z/\partial t$ (V/m²)', fontsize=16)
         ax1.plot(xaxis, yaxis1, label=label, alpha=alpha, color=col, zorder=zorder, marker='.', linestyle=line)
         if change_scale:
             ax1.loglog()
@@ -974,7 +974,7 @@ class SurveyTEM(SurveyBase):
             ax1.legend(loc='lower left', fontsize=12)
         ax1.grid(True, which="both", alpha=.3)
 
-        ax2.set_xlabel('Time [s]', fontsize=16)
+        ax2.set_xlabel('Time (s)', fontsize=16)
         ax2.set_ylabel(unit_label, fontsize=16)
         if yaxis2 is not None:
             ax2.plot(xaxis, yaxis2, alpha=alpha, color=col, zorder=zorder, marker='.', linestyle=line)
@@ -1073,9 +1073,9 @@ class SurveyTEM(SurveyBase):
             raise SyntaxError('input {} not valid for Argument scale'.format(scale))
 
         if unit == 'rhoa':
-            unit_label = r'$\rho_a$ [$\Omega$m]'
+            unit_label = r'$\rho_a$ ($\Omega$m)'
         elif unit == 'sigma':
-            unit_label = r'$\sigma_a$ [mS/m]'
+            unit_label = r'$\sigma_a$ (mS/m)'
         else:
             raise SyntaxError('input {} not valid for Argument unit'.format(unit))
 
@@ -1086,8 +1086,8 @@ class SurveyTEM(SurveyBase):
             yaxis1 = model_data['E/I[V/A]']
             yaxis2 = model_data[unit]
 
-            ax1.set_xlabel('Time [s]', fontsize=16)
-            ax1.set_ylabel(r'$\partial B_z/\partial t$ [V/m²]', fontsize=16)
+            ax1.set_xlabel('Time (s)', fontsize=16)
+            ax1.set_ylabel(r'$\partial B_z/\partial t$ (V/m²)', fontsize=16)
             ax1.plot(xaxis, yaxis1, label=label, color=col, marker='.')
             if change_scale:
                 ax1.loglog()
@@ -1096,7 +1096,7 @@ class SurveyTEM(SurveyBase):
                 ax1.legend(loc='lower left', fontsize=12)
             ax1.grid(True, which="both", alpha=.3)
 
-            ax2.set_xlabel('Time [s]', fontsize=16)
+            ax2.set_xlabel('Time (s)', fontsize=16)
             ax2.set_ylabel(unit_label, fontsize=16)
             ax2.plot(xaxis, yaxis2, color=col, marker='.')
             if change_scale:
@@ -1159,18 +1159,18 @@ class SurveyTEM(SurveyBase):
         rrms = inversion_metadata.get('relrms')
 
         if unit == 'rhoa':
-            unit_label_ax = r'$\rho_a$ [$\Omega$m]'
+            unit_label_ax = r'$\rho_a$ ($\Omega$m)'
             unit_title = 'Apparent Resistivity'
             unit_title_mod = 'Resistivity'
-            unit_label_mod = r'$\rho$ [$\Omega$m]'
+            unit_label_mod = r'$\rho$ ($\Omega$m)'
             model_unit = inversion_data['resistivity_model'].dropna()
             pos_1 = 'right'
             pos_2 = 'left'
         else:
-            unit_label_ax = r'$\sigma_a$ [S/m]'
+            unit_label_ax = r'$\sigma_a$ (S/m)'
             unit_title = 'Apparent Conductivity'
             unit_title_mod = 'Conductivity'
-            unit_label_mod = r'$\sigma$ [S/m]'
+            unit_label_mod = r'$\sigma$ (S/m)'
             model_unit = inversion_data['conductivity_model'].dropna()
             pos_1 = 'left'
             pos_2 = 'right'
@@ -1181,13 +1181,13 @@ class SurveyTEM(SurveyBase):
         ax[0].loglog(filtered_data['Time'], resp_sgnl, '-k', label='inversion', zorder=3)
         ax[0].plot(filtered_data['Time'], filtered_data['E/I[V/A]'], marker='v', label='observed', zorder=2) #color=self.col,
         ax[0].plot(filtered_data['Time'], filtered_data['Err[V/A]'], label='error', zorder=1, alpha=0.4, linestyle='dashed') #color=self.col,
-        ax[0].set_xlabel('time [s]', fontsize=16)
-        ax[0].set_ylabel(r'$\partial B_z/\partial t$ [V/m²]', fontsize=16)
+        ax[0].set_xlabel('time (s)', fontsize=16)
+        ax[0].set_ylabel(r'$\partial B_z/\partial t$ (V/m²)', fontsize=16)
         ax[0].grid(True, which="both", alpha=.3)
 
         ax[1].plot(filtered_data['Time'], response_unit, '-k', label='inversion', zorder=3)
         ax[1].plot(filtered_data['Time'], obs_unit, marker='v', label='observed', zorder=2) #color=self.col,
-        ax[1].set_xlabel('time [s]', fontsize=16)
+        ax[1].set_xlabel('time (s)', fontsize=16)
         ax[1].set_ylabel(unit_label_ax, fontsize=16)
         ax[1].set_xscale('log')
         ax[1].yaxis.tick_right()
@@ -1196,7 +1196,7 @@ class SurveyTEM(SurveyBase):
 
         pygimli.viewer.mpl.drawModel1D(ax[2], thks, model_unit, color='k', label='pyGIMLI')
         ax[2].set_xlabel(unit_label_mod, fontsize=16)
-        ax[2].set_ylabel('depth [m]', fontsize=16)
+        ax[2].set_ylabel('depth (m)', fontsize=16)
         ax[2].yaxis.tick_right()
         ax[2].yaxis.set_label_position("right")
 
@@ -1655,23 +1655,23 @@ class SurveyTEM(SurveyBase):
             resp_sgnl = inversion_data['E/I[V/A]'].dropna()
 
             if unit == 'rhoa':
-                unit_label_ax = r'$\rho_a$ [$\Omega$m]'
+                unit_label_ax = r'$\rho_a$ ($\Omega$m)'
             else:
-                unit_label_ax = r'$\sigma_a$ [S/m]'
+                unit_label_ax = r'$\sigma_a$ (S/m)'
 
             ax1[i].loglog(filtered_data['Time'], resp_sgnl, '-k', label='inversion', zorder=3)
             ax1[i].plot(filtered_data['Time'], filtered_data['E/I[V/A]'], marker='v', label='observed',
                        zorder=2)
             ax1[i].plot(filtered_data['Time'], filtered_data['Err[V/A]'], label='error', zorder=1, alpha=0.4,
                        linestyle='dashed')
-            ax1[i].set_xlabel('time [s]', fontsize=16)
+            ax1[i].set_xlabel('time (s)', fontsize=16)
             ax1[i].set_ylabel(r'$\partial B_z/\partial t$ [V/m²]', fontsize=16)
             ax1[i].grid(True, which="both", alpha=.3)
 
             ax2[i].plot(filtered_data['Time'], response_unit, '-k', label='inversion', zorder=3)
             ax2[i].plot(filtered_data['Time'], obs_unit, marker='v', label='observed', zorder=2)
             ax2[i].set_title(f'{lam: .2f}', fontweight='bold', fontsize=16)
-            ax2[i].set_xlabel('time [s]', fontsize=16)
+            ax2[i].set_xlabel('time (s)', fontsize=16)
             ax2[i].set_ylabel(unit_label_ax, fontsize=16)
             ax2[i].set_xscale('log')
             ax2[i].yaxis.tick_right()
@@ -1756,18 +1756,18 @@ class SurveyTEM(SurveyBase):
         roughness = inversion_metadata.get('phi_model')
 
         if unit == 'rhoa':
-            unit_label_ax = r'$\rho_a$ [$\Omega$m]'
+            unit_label_ax = r'$\rho_a$ ($\Omega$m)'
             unit_title = 'Apparent Resistivity'
             unit_title_mod = 'Resistivity'
-            unit_label_mod = r'$\rho$ [$\Omega$m]'
+            unit_label_mod = r'$\rho$ ($\Omega$m)'
             model_unit = inversion_data['resistivity_model'].dropna()
             pos_1 = 'right'
             pos_2 = 'left'
         else:
-            unit_label_ax = r'$\sigma_a$ [S/m]'
+            unit_label_ax = r'$\sigma_a$ (S/m)'
             unit_title = 'Apparent Conductivity'
             unit_title_mod = 'Conductivity'
-            unit_label_mod = r'$\sigma$ [S/m]'
+            unit_label_mod = r'$\sigma$ (S/m)'
             model_unit = inversion_data['conductivity_model'].dropna()
             pos_1 = 'left'
             pos_2 = 'right'
@@ -1778,13 +1778,13 @@ class SurveyTEM(SurveyBase):
         ax[0].loglog(filtered_data['Time'], resp_sgnl, '-k', label='inversion', zorder=3)
         ax[0].plot(filtered_data['Time'], filtered_data['E/I[V/A]'], marker='v', label='observed', zorder=2) #color=self.col,
         ax[0].plot(filtered_data['Time'], filtered_data['Err[V/A]'], label='error', zorder=1, alpha=0.4, linestyle='dashed') #color=self.col,
-        ax[0].set_xlabel('time [s]', fontsize=16)
+        ax[0].set_xlabel('time (s)', fontsize=16)
         ax[0].set_ylabel(r'$\partial B_z/\partial t$ [V/m²]', fontsize=16)
         ax[0].grid(True, which="both", alpha=.3)
 
         ax[1].plot(filtered_data['Time'], response_unit, '-k', label='inversion', zorder=3)
         ax[1].plot(filtered_data['Time'], obs_unit, marker='v', label='observed', zorder=2) #color=self.col,
-        ax[1].set_xlabel('time [s]', fontsize=16)
+        ax[1].set_xlabel('time (s)', fontsize=16)
         ax[1].set_ylabel(unit_label_ax, fontsize=16)
         ax[1].set_xscale('log')
         ax[1].yaxis.tick_right()
@@ -1793,7 +1793,7 @@ class SurveyTEM(SurveyBase):
 
         pygimli.viewer.mpl.drawModel1D(ax[2], thks, model_unit, color='k', label='pyGIMLI')
         ax[2].set_xlabel(unit_label_mod, fontsize=16)
-        ax[2].set_ylabel('depth [m]', fontsize=16)
+        ax[2].set_ylabel('depth (m)', fontsize=16)
 
 
         ax[3].plot(roughness_values, rms_values, 'o', label='L-Curve')
