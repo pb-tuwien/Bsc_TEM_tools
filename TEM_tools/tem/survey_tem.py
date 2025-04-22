@@ -1779,7 +1779,7 @@ class SurveyTEM(SurveyBase):
         ax[0].plot(filtered_data['Time'], filtered_data['E/I[V/A]'], marker='v', label='observed', zorder=2) #color=self.col,
         ax[0].plot(filtered_data['Time'], filtered_data['Err[V/A]'], label='error', zorder=1, alpha=0.4, linestyle='dashed') #color=self.col,
         ax[0].set_xlabel('time (s)', fontsize=16)
-        ax[0].set_ylabel(r'$\partial B_z/\partial t$ [V/m²]', fontsize=16)
+        ax[0].set_ylabel(r'$\partial B_z/\partial t$ (V/m²)', fontsize=16)
         ax[0].grid(True, which="both", alpha=.3)
 
         ax[1].plot(filtered_data['Time'], response_unit, '-k', label='inversion', zorder=3)
