@@ -266,8 +266,9 @@ class SurveyTEM(SurveyBase):
             Dictionary containing the data and metadata with the coordinates added.
         """
         if self._coordinates_grouped is None:
-            self.logger.error('_add_coords_to_data: No coordinates found. Run coords_extract_save() first.')
-            raise KeyError('_add_coords_to_data: No coordinates found.')
+            self.logger.warning('_add_coords_to_data: No coordinates found. Continued without.')
+            return data_dict
+            # raise KeyError('_add_coords_to_data: No coordinates found.')
 
         new_data_dict = data_dict.copy()
 
@@ -319,7 +320,8 @@ class SurveyTEM(SurveyBase):
                     df_data['Err[V/A]'] = current * df_data['Err[V/A]'] / (tloop ** 2 * turn)
                     df_data['Time'] = df_data['Time'] / 1e6
                     mag_momen = turn * current * tloop ** 2
-                    df_data['rhoa'] = 1 / np.pi * (mag_momen / (20 * df_data['E/I[V/A]'])) ** (2 / 3) * (self._mu / df_data['Time']) ** (5 / 3)
+                    df_data['rhoa'] = 1 / np.pi * (mag_momen / (20 * np.abs(df_data['E/I[V/A]']))) ** (2 / 3) * (self._mu / df_data['Time']) ** (5 / 3)
+                    df_data.loc[df_data['E/I[V/A]'] < 0, 'rhoa'] *= -1
                     df_data['sigma'] = 1 / (df_data['rhoa'])
                     norm_data_dict[key]['data'] = df_data
 
@@ -1793,7 +1795,7 @@ class SurveyTEM(SurveyBase):
         pygimli.viewer.mpl.drawModel1D(ax[2], thks, model_unit, color='k', label='pyGIMLI')
         ax[2].set_xlabel(unit_label_mod, fontsize=16)
         ax[2].set_ylabel('depth [m]', fontsize=16)
-        ax[2].set_xlim(15,24)
+        # ax[2].set_xlim(15,24)
 
 
         ax[3].plot(roughness_values, rms_values, 'o', label='L-Curve')
