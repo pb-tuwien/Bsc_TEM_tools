@@ -2,26 +2,25 @@
 """
 Created on Sat Nov 02 17:15:02 2024
 
-@author: peter
+Class for creating folder structures.
+
+@author: peter balogh @ TU Wien, Research Unit Geophysics
 """
-from typing import Optional
 
-#%% Import modules
-
-import yaml
+#%% Imports
+import json
 from pathlib import Path
 import shutil
 from typing import Union
-
-from TEM_tools.core.base import BaseFunction
+from .utils import BaseFunction
 
 # %% GPfolder class
 
-class GPfolder(BaseFunction):
+class FolderHandler(BaseFunction):
     """
     This class creates a directory structure based on a template.
     """
-    def __init__(self, root_path: Union[Path, str], template: Union[str, dict]) -> None:
+    def __init__(self, root_path: Union[Path, str], template: Union[str, dict], save_log: bool = False) -> None:
         """
         This method initializes the GPfolder class.
         It creates the main folders of the directory structure.
@@ -34,13 +33,15 @@ class GPfolder(BaseFunction):
             The template for the directory structure.
             If a string is given, it must be the name of a template in the "templates/dir_structure" directory.
             If a dictionary is given, it must be the template itself.
+        save_log: bool, optional
+            If the log should be saved to a log file. The default is False.
         """
         self._root_path = Path(root_path)
         self._templates_dir = None
         self._log_path = None
         self._load_templates()
         self._dir_template = self._choose_template(template)
-        self._folder_structure = self._create_folders()
+        self._folder_structure = self._create_folders(save_log=save_log)
 
         self.logger = self._setup_logger(log_path=self.log_path())
 
@@ -96,15 +97,15 @@ class GPfolder(BaseFunction):
         -------
         None
         """
-        template_folder = Path(__file__).parents[1] / 'templates' / 'dir_structure'
+        template_folder = Path(__file__).parent / 'templates'
 
         if template_folder.exists() and template_folder.is_dir():
-            templates_dir = [(file.stem, yaml.safe_load(file.read_text())) for file in
-                             template_folder.iterdir() if file.is_file() and file.suffix == '.yml']
+            templates_dir = [(file.stem, json.loads(file.read_text())) for file in
+                             template_folder.iterdir() if file.is_file() and file.suffix == '.json']
             if len(templates_dir) == 0:
                 raise FileNotFoundError('No templates for directory structure found.')
-            self._templates_dir = {temp.get('config', {}).get('name', name): temp for name, temp in
-                                    templates_dir}
+            self._templates_dir = {temp.get('name', name): temp for name, temp in
+                                    templates_dir if temp.get('type') == 'dir_structure'}
         else:
             raise FileNotFoundError('Make sure "templates/dir_structure" directory exists.')
 
@@ -127,9 +128,14 @@ class GPfolder(BaseFunction):
         else:
             raise TypeError('Template must be a string or a dictionary.')
 
-    def _create_folders(self) -> dict:
+    def _create_folders(self, save_log: bool) -> dict:
         """
         Creates the main folders of the directory structure.
+
+        Parameters
+        ----------
+        save_log: bool
+            If the log should be saved in a log file.
 
         Returns
         -------
@@ -139,7 +145,6 @@ class GPfolder(BaseFunction):
         basedir = self.root_path()
         main_structure = self.dir_template().get('main_template')
         if main_structure is None:
-            self.logger.error('create_folders: Main template was not found.')
             raise KeyError('create_folders: Main template was not found.')
 
         main_structure = {key: basedir / value for key, value in main_structure.items()}
@@ -147,6 +152,8 @@ class GPfolder(BaseFunction):
         if main_structure.get('log') is not None:
             log_path = main_structure.pop('log')
             log_path.parent.mkdir(parents=True, exist_ok=True)
+            if not save_log:
+                log_path = None
         else:
             log_path = None
         self._log_path = log_path

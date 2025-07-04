@@ -1,21 +1,24 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Nov 01 10:38:41 2024
+Created on Wed May 21 19:32:29 2025
 
-@author: peter
+Basic utility functions and classes
+
+@author: peter balogh @ TU Wien, Research Unit Geophysics
 """
 
-#%% Import modules
+#%% Imports
 
 from pathlib import Path
 import logging
-from typing import Optional
+from typing import Optional, Union
 import numpy as np
 import pandas as pd
 import time
+import datetime
 from functools import wraps
 
-#%% Timer function
+#%% Timer decorator
 
 def time_logger(func):
     """
@@ -48,8 +51,43 @@ def time_logger(func):
                 print(f'Time taken by {func.__name__}: {elapsed_time:.2f} seconds.')
     return wrapper
 
-#%% BaseFunction class
+#%% Timer class
+class TimerError(Exception):
 
+    """A custom exception used to report errors in use of Timer class"""
+
+
+class Timer:
+
+    def __init__(self):
+        self._start_time = None
+        self._stop_time = None
+
+
+    def start(self):
+        """Start a new timer"""
+
+        if self._start_time is not None:
+            raise TimerError("Timer is running. Use .stop() to stop it")
+
+        self._start_time = time.perf_counter()
+
+
+    def stop(self, prefix='run-'):
+        """Stop the timer, and report the elapsed time"""
+
+        if self._start_time is None:
+            raise TimerError("Timer is not running. Use .start() to start it")
+
+        self._stop_time = time.perf_counter()
+        elapsed_time = self._stop_time - self._start_time
+        elapsed_time_string = str(datetime.timedelta(seconds=elapsed_time))[:-3]
+        self._start_time = None
+
+        print(f"Elapsed {prefix}time (hh:mm:ss.sss): {elapsed_time_string:s}")
+
+        return elapsed_time, elapsed_time_string
+#%% BaseFunction class
 class BaseFunction:
     def _setup_logger(self, log_path=None):
         """
@@ -114,7 +152,7 @@ class BaseFunction:
             print(f'{level.upper()}: {message}')
 
     @staticmethod
-    def safe_to_numeric(data: [int, float, str, list, np.ndarray, pd.DataFrame]) -> [int, float, str, list, np.ndarray, pd.DataFrame]:
+    def safe_to_numeric(data: Union[int, float, str, list, np.ndarray, pd.DataFrame]) -> Union[int, float, str, list, np.ndarray, pd.DataFrame]:
         """
         Converts individual values or arrays to numeric values if possible.
         Tries to convert to int first, then to float.
@@ -140,12 +178,14 @@ class BaseFunction:
             for col in data.columns:
                 data[col] = data[col].apply(convert_value)
             return data
-        elif isinstance(data, (list, np.ndarray)):
+        elif isinstance(data, np.ndarray):
             return np.array([convert_value(val) for val in data])
+        elif isinstance(data, (list, tuple)):
+            return [convert_value(val) for val in data]
         else:
             return convert_value(data)
 
-    def _type_changer(self, type_string: str, value: [int, float, bool, str]) -> [int, float, bool, str]:
+    def _type_changer(self, type_string: str, value: Union[int, float, bool, str]) -> Union[int, float, bool, str]:
         """
         Changes the type of the value.
         Parameters
@@ -208,4 +248,3 @@ class BaseFunction:
                     handler.close()
                     logger.removeHandler(handler)
         self._output(f'{self.__class__.__name__}: Logging to file stopped.')
-

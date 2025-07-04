@@ -2,22 +2,18 @@
 """
 Created on Sun Nov 03 17:31:37 2024
 
-@author: peter
-"""
+A base class for geophysical surveys.
 
+@author: peter balogh @ TU Wien, Research Unit Geophysics
+"""
 #%% Import modules
 
 from pathlib import Path
 from typing import Optional, Union
 import pandas as pd
-from TEM_tools.core.base import BaseFunction
-from TEM_tools.core.gp_coords import GPcoords
-from TEM_tools.core.gp_folder import GPfolder
-
-#%% Aufgaben
-
-#todo: Implement GPconfig in SurveyBase class
-#todo: add docstrings to SurveyBase class
+from .utils import BaseFunction
+from .coordinate_handler import CoordinateHandler
+from .folder_handler import FolderHandler
 
 #%% SurveyBase class
 
@@ -28,7 +24,7 @@ class SurveyBase(BaseFunction):
     It gives the user a structured way to handle survey coordinates.
     For handling survey data, the user should go to the daughter classes.
     """
-    def __init__(self, project_dir: Union[Path, str], dir_structure: Union[str, dict]) -> None:
+    def __init__(self, project_dir: Union[Path, str], dir_structure: Union[str, dict], save_log: bool = False) -> None:
         """
         Initializes the SurveyBase class.
 
@@ -46,13 +42,13 @@ class SurveyBase(BaseFunction):
         self._project_dir = Path(project_dir)
         self._dir_structure = dir_structure
 
-        self._gp_folder = GPfolder(root_path=self._project_dir, template=self._dir_structure)
+        self._gp_folder = FolderHandler(root_path=self._project_dir, template=self._dir_structure, save_log=save_log)
         self._log_path = self._gp_folder.log_path()
         self._folder_structure = self._gp_folder.folder_structure()
 
         self.logger = self._setup_logger(log_path=self._log_path)
 
-        self._gp_coords = GPcoords(log_path=self._log_path)
+        self._gp_coords = CoordinateHandler(log_path=self._log_path)
 
     def project_dir(self) -> Path:
         """
@@ -148,7 +144,7 @@ class SurveyBase(BaseFunction):
                     self.logger.warning('coords_read: No raw coordinate files found in the directory structure.')
                 else:
                     self._gp_coords.read(file_path=raw_paths[0], sep=sep)
-                    self._coordinates_raw = self._gp_coords.coordinates()
+                    self._coordinates_raw = self._gp_coords.coordinates
 
             if proc_coords is not None and proc_coords.exists():
                 proc_paths = [path for path in proc_coords.iterdir() if path.is_file()]
@@ -158,7 +154,7 @@ class SurveyBase(BaseFunction):
                     self.logger.warning('coords_read: No processed coordinate files found in the directory structure.')
                 else:
                     self._gp_coords.read(file_path=proc_paths[0], sep=sep)
-                    self._coordinates_proc = self._gp_coords.coordinates()
+                    self._coordinates_proc = self._gp_coords.coordinates
                     self._coordinates_grouped = self._gp_coords.extract_coords()
 
         else:
@@ -168,7 +164,7 @@ class SurveyBase(BaseFunction):
                 new_coords = raw_coords / file_name
                 self._gp_folder.move_files(from_path=coords, to_path=raw_coords)
                 self._gp_coords.read(file_path=new_coords, sep=sep)
-                self._coordinates_raw = self._gp_coords.coordinates()
+                self._coordinates_raw = self._gp_coords.coordinates
             else:
                 self.logger.warning('coords_read: No file found. Tries reading from the directory structure.')
                 if coords is not None:
@@ -287,7 +283,7 @@ class SurveyBase(BaseFunction):
         if proc_coords is None:
             self.logger.warning('coords_extract_save: No processed coordinates folder found in the directory structure.')
         else:
-            coords_file = self._gp_coords.coordinate_path()
+            coords_file = self._gp_coords.coordinate_path
             if coords_file.parent != proc_coords:
                 proc_file = proc_coords / f'{coords_file.stem}_proc{coords_file.suffix}'
                 self._gp_coords.write(file_path=proc_file)

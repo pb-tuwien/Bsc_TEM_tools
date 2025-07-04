@@ -2,9 +2,10 @@
 """
 Created on Sun Nov 03 19:31:36 2024
 
-@author: peter & jakob
-"""
+An extension class to SurveyTEM.
 
+@author: jakob welkens & peter balogh @ TU Wien, Research Unit Geophysics
+"""
 #%% Import modules
 
 from scipy.interpolate import griddata
