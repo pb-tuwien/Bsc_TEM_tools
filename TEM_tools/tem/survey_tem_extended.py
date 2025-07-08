@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 # from datetime import datetime
 import matplotlib.pyplot as plt
-import gp_tools.tem.survey_tem as st
+import TEM_tools.tem.survey_tem as st
 
 warnings.filterwarnings('ignore')
 

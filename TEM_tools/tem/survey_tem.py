@@ -17,10 +17,9 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 import matplotlib.pyplot as plt
-import pygimli.viewer.mpl
 from scipy.interpolate import CubicSpline
 
-from gp_tools.core import TEMfile, TIMfile, SurveyBase
+from TEM_tools.core import TEMfile, TIMfile, SurveyBase
 from .inversion.empymod_inversion import tem_inv_smooth1D
 from .forward.utils import plot_data, plot_model
 
