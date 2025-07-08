@@ -13,7 +13,7 @@ based upon pygimli example
 # %% import modules
 import numpy as np
 import pygimli as pg
-from TEM_tools.tem.forward import empymod_frwrd
+from gp_tools.tem.forward import empymod_frwrd
 
 # %% class_lib
 class tem_smooth1D_fwd(pg.Modelling):
