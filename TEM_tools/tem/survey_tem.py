@@ -267,7 +267,7 @@ class SurveyTEM(SurveyBase):
         dict
             Dictionary containing the data and metadata with the coordinates added.
         """
-        if self._coordinates_grouped is None:
+        if self.coordinates_grouped is None:
             self.logger.warning('_add_coords_to_data: No coordinates found. Continued without.')
             return data_dict
 
@@ -280,9 +280,9 @@ class SurveyTEM(SurveyBase):
                 else:
                     coords_key = key
 
-                value['metadata']['x'] = self._coordinates_grouped.get(coords_key, {}).get('x', 0)
-                value['metadata']['y'] = self._coordinates_grouped.get(coords_key, {}).get('y', 0)
-                value['metadata']['z'] = self._coordinates_grouped.get(coords_key, {}).get('z', 0)
+                value['metadata']['x'] = self.coordinates_grouped.get(coords_key, {}).get('x', 0)
+                value['metadata']['y'] = self.coordinates_grouped.get(coords_key, {}).get('y', 0)
+                value['metadata']['z'] = self.coordinates_grouped.get(coords_key, {}).get('z', 0)
             return new_data_dict
         else:
             self.logger.error('_add_coords_to_data: No data found.')
@@ -747,7 +747,7 @@ class SurveyTEM(SurveyBase):
                         data_inversion[inversion_key] = inversion_result
                         data_inversion_raw[inversion_name] = data_inversion[inversion_key]
 
-                TIMfile.write(data=data_inversion_raw, filepath=file_path_inversion)        
+                        TIMfile.write(data=data_inversion_raw, filepath=file_path_inversion)        
 
             else:
                 for lambda_param in lambda_list:
@@ -760,7 +760,7 @@ class SurveyTEM(SurveyBase):
                     data_inversion[inversion_key]['metadata']['name'] = inversion_key
                     data_inversion[inversion_key]['metadata']['max_depth'] = max_depth
 
-                TIMfile.write(data=data_inversion, filepath=file_path_inversion)
+                    TIMfile.write(data=data_inversion, filepath=file_path_inversion)
             
             if self.data_inverted.get(key) is None:
                 self.data_inverted[key] = {}
@@ -982,7 +982,8 @@ class SurveyTEM(SurveyBase):
             file_name = f'{sounding}_{time}_{unit}.png' if fname is None else fname
             fig.savefig(target_dir / file_name)
 
-    def plot_inversion(self, subset:list=None,
+    def plot_inversion(self, 
+                       subset:list=None,
                        lam: Union[int, float] = 600,
                        layer_type: str = 'linear',
                        layers: Union[int, float, dict, np.ndarray] = 4.5,
@@ -990,6 +991,13 @@ class SurveyTEM(SurveyBase):
                        start_model: np.ndarray = None,
                        noise_floor: Union[float, int] = 0.025,
                        unit: str = 'rhoa',
+                       scale: str = 'lin',
+                       limits_depth: Optional[tuple] = None,
+                       limits_rho: Optional[tuple] = None,
+                       limits_time: Optional[tuple] = None,
+                       limits_signal: Optional[tuple] = None,
+                       limits_rhoa: Optional[tuple] = None,
+                       colormap = None,
                        filter_times=(7, 700),
                        verbose: bool = True,
                        fname: Union[str, bool] = None) -> None:
@@ -1002,12 +1010,13 @@ class SurveyTEM(SurveyBase):
                             verbose=verbose)
 
         for key in plot_list:
-            self._plot_one_inversion(sounding=key,
-                                     lam=lam,
-                                     filter_times=filter_times,
-                                     noise_floor=noise_floor,
-                                     unit=unit,
-                                     fname=fname)
+            self._plot_one_inversion(sounding=key, limits_rho=limits_rho,
+                                     lam=lam, limits_time=limits_time,
+                                     filter_times=filter_times, limits_rhoa=limits_rhoa,
+                                     noise_floor=noise_floor, limits_signal=limits_signal,
+                                     unit=unit, limits_depth=limits_depth,
+                                     fname=fname, scale=scale, colormap=colormap
+                                     )
 
     @staticmethod
     def _menger_curvature(p1, p2, p3):
