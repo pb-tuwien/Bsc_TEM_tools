@@ -712,6 +712,8 @@ class SurveyTEM(SurveyBase):
                         for inv_key in key_list:
                             found_data = data_inversion_raw.get(inv_key)
                             found_df = found_data.get('data')
+                            found_metadata = found_data.get('metadata')
+                            found_max_depth = found_metadata.get('max_depth')
                             found_start_model = found_df['start_model'].dropna().values
                             found_depth_vector = found_df['depth_vector'].dropna().values
 
@@ -725,7 +727,9 @@ class SurveyTEM(SurveyBase):
                             else:
                                 start_same = np.allclose(start_model, found_start_model, atol=1e-5)
 
-                            if start_same and depth_same:
+                            max_depth_same = np.allclose(max_depth, found_max_depth, atol=1e-2)
+
+                            if start_same and depth_same and max_depth_same:
                                 if verbose:
                                     self.logger.info(f'inversion: Inversion already exists. Added {inversion_key} to {key}.')
                                 data_inversion[inversion_key] = found_data
@@ -1074,7 +1078,7 @@ class SurveyTEM(SurveyBase):
                                                 layer_type:str = 'linear',
                                                 filter_times: tuple = (7, 700),
                                                 noise_floor: float = 0.025,
-                                                normalize: bool = False,
+                                                normalize: bool = True,
                                                 shared_mode: bool = False,
                                                 fname: Union[str, bool] = None):
 
@@ -1173,7 +1177,7 @@ class SurveyTEM(SurveyBase):
                                             filter_times=(7, 700),
                                             noise_floor: float = 0.025,
                                             shared_mode: bool = False,
-                                            normalize: bool = False,
+                                            normalize: bool = True,
                                             fname: Union[str, bool] = None):
 
         test_tuple = test_range if len(test_range) == 3 else (test_range[0], test_range[1], 30)
@@ -1261,9 +1265,9 @@ class SurveyTEM(SurveyBase):
                                         filter_times = (7, 700),
                                         noise_floor: float = 0.025,
                                         max_iter: int = 20,
-                                        tolerance: float = 0.01,
+                                        tolerance: float = 1.0,
                                         shared_mode: bool = False,
-                                        normalize: bool = False,
+                                        normalize: bool = True,
                                         fname: Union[str, bool] = None) -> float:
         phi = (1 + 5 ** 0.5) / 2
 
@@ -1297,7 +1301,8 @@ class SurveyTEM(SurveyBase):
         opt_point = None
 
         for i in range(max_iter):
-            if (lam4 - lam1) / lam4 < tolerance:
+            # if (lam4 - lam1) / lam4 < tolerance: # Stopping condition: relative deviation
+            if lam4 - lam1 < tolerance: # Stopping condition: absolute deviation
                 break
             else:
                 curve2 = self._menger_curvature(p1, p2, p3)
@@ -1432,19 +1437,20 @@ class SurveyTEM(SurveyBase):
                                    layer_type:str = 'linear',
                                    filter_times=(7, 700),
                                    noise_floor: float = 0.025,
+                                   normalize: bool = True,
                                    fname: Union[str, bool] = None):
         fig = self.l_curve_plot(sounding=sounding, layers=layers, max_depth=max_depth, noise_floor=noise_floor,
                                 test_range=test_range, layer_type=layer_type, filter_times=filter_times,
                                 fname=False)
         opt_grad = self.analyse_inversion_gradient_curvature(sounding=sounding, layers=layers, max_depth=max_depth, shared_mode=True,
                                 test_range=test_range, layer_type=layer_type, filter_times=filter_times, noise_floor=noise_floor,
-                                fname=False)
+                                fname=False, normalize=normalize)
         opt_cubic = self.analyse_inversion_cubic_spline_curvature(sounding=sounding, layers=layers, max_depth=max_depth, shared_mode=True,
                                 test_range=test_range, layer_type=layer_type, filter_times=filter_times, noise_floor=noise_floor,
-                                fname=False)
+                                fname=False, normalize=normalize)
         opt_golden = self.analyse_inversion_golden_section(sounding=sounding, layers=layers, max_depth=max_depth, shared_mode=True,
                                 test_range=(test_range[0], test_range[1]), layer_type=layer_type, noise_floor=noise_floor,
-                                filter_times=filter_times, fname=False)
+                                filter_times=filter_times, fname=False, normalize=normalize)
 
         point_grad = self._l_curve_point(sounding=sounding, lam=opt_grad, layer_type=layer_type, noise_floor=noise_floor,
                                          layers=layers, max_depth=max_depth, filter_times=filter_times)
