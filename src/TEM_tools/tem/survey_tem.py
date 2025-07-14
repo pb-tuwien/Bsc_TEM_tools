@@ -1519,6 +1519,7 @@ class SurveyTEM(SurveyBase):
                        zorder=2)
             ax1[i].plot(filtered_data['Time'], filtered_data['Err[V/A]'], label='error', zorder=1, alpha=0.4,
                        linestyle='dashed')
+            ax1[i].set_title(f'{lam: .2f}', fontweight='bold', fontsize=16)
             ax1[i].set_xlabel('time (s)', fontsize=16)
             ax1[i].set_ylabel(r'$\partial B_z/\partial t$ [V/m²]', fontsize=16)
             ax1[i].grid(True, which="both", alpha=.3)
