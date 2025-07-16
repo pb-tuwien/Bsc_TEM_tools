@@ -31,5 +31,5 @@ survey.data_read()
 survey.data_preprocess(parsing_dict=parsing_coords)
 
 # survey.plot_inversion(subset=['M024'], max_depth=30, fname=False , lam=300)
-survey.data_inversion(lam=[60, 70], subset=['M025'], max_depth=30)
+survey.plot_2d_section(lam=60, subset=['M025', 'M026', 'M027'], max_depth=20)
 

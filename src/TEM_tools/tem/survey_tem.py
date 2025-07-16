@@ -16,6 +16,8 @@ from typing import Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from datetime import datetime
+import matplotlib
+import matplotlib.colors as mcolor
 import matplotlib.pyplot as plt
 from scipy.interpolate import CubicSpline
 
@@ -1705,9 +1707,12 @@ class SurveyTEM(SurveyBase):
             file_name = f'opt_{sounding}_{time}_{unit}.png' if fname is None else fname
             fig.savefig(target_dir / file_name)
 
+
+
     def plot_2d_section(self,
                        subset: list,
-                       line_points: Optional[tuple] = None,
+                       profile_name: Optional[str] = None,
+                       line_points: Optional[tuple[np.ndarray, np.ndarray]] = None,
                        lam: Optional[Union[int, float, list]] = None,
                        search_mode: str = 'gradient',
                        layer_type: str = 'linear',
@@ -1715,8 +1720,8 @@ class SurveyTEM(SurveyBase):
                        max_depth: Union[float, int] = None,
                        start_model: np.ndarray = None,
                        noise_floor: Union[float, int] = 0.025,
-                       unit: str = 'rhoa',
-                       scale: str = 'lin', # TODO maybe
+                       unit: str = 'rho',
+                    #    scale: str = 'lin', # TODO maybe
                        elevation: bool = True,
                        mode: str = 'bar',
                        limits_depth: Optional[tuple] = None,
@@ -1732,8 +1737,21 @@ class SurveyTEM(SurveyBase):
 
         if isinstance(lam, list) and len(lam) != len(subset):
             raise ValueError('Could not match lambdas to the soundings')
+        
+        if unit == 'rho':
+            unit_title = 'Resistivity'
+            unit_label = r'$\rho$ ($\Omega$m)'
+        elif unit == 'sigma':
+            unit_title = 'Conductivity'
+            unit_label = r'$\sigma$ (mS/m)'
+        else:
+            raise SyntaxError(f'Input {unit} not valid for Argument unit:')
+
+        model_df = pd.DataFrame()
 
         for i, sounding in enumerate(subset):
+            df = pd.DataFrame()
+
             if isinstance(lam, list):
                 chosen_lambda = lam[i]
             elif lam is None:
@@ -1761,18 +1779,141 @@ class SurveyTEM(SurveyBase):
                     raise KeyError(f'Invalid input for search mode: {search_mode}. Must be from {search_list}.')
             else:
                 chosen_lambda = lam
-            
+
             chosen_lambda = float(chosen_lambda)
             self.data_inversion(subset=[sounding], lam=chosen_lambda, layer_type=layer_type, layers=layers,
                                 max_depth=max_depth, filter_times=filter_times,
                                 start_model=start_model, noise_floor=noise_floor,
                                 verbose=False)
             
+            raw_metadata = self.data_preprocessed.get(sounding).get('metadata')
+            x, y, z = raw_metadata.get('x'), raw_metadata.get('y'), raw_metadata.get('z')
+
             inv_name = f'{chosen_lambda}_{filter_times[0]}_{filter_times[1]}_{noise_floor}'
-            inverted_data = self.data_inverted.get(sounding, {}).get(inv_name)
-            raw_data = self.data_preprocessed.get(sounding)
+            inverted_data = self.data_inverted.get(sounding, {}).get(inv_name, {}).get('data')
 
-            raw_metadata = raw_data.get('metadata')
+            depth_vector = inverted_data['depth_vector'].dropna().values
+            res_values = inverted_data['resistivity_model'].dropna().values
+
+            df['thickness'] = np.r_[np.diff(depth_vector), np.diff(depth_vector)[-1]]
+            df['depth'] = np.cumsum(df['thickness'])
+            df['model_values'] = res_values if unit == 'rho' else 1000/res_values
+            df['Name'] = sounding
+            df['X'] = x
+            df['Y'] = y
+            df['Z'] = z
+            df['layer_number'] = np.arange(len(depth_vector))
+
+            model_df = pd.concat([model_df, df])
+        
+        if line_points is None:
+            start_name, end_name = subset[0], subset[-1]
+            start_point = np.unique(model_df[model_df['Name'] == start_name][['X', 'Y']].values)
+            end_point = np.unique(model_df[model_df['Name'] == end_name][['X', 'Y']].values)
+        else:
+            start_point, end_point = line_points
+        
+        profile_vector = end_point - start_point
+        profile_length = np.linalg.norm(profile_vector)
+        profile_unit_vector = profile_vector / profile_length
+
+        def project_point(point):
+            point_vector = np.array([point['X'], point['Y']]) - start_point
+            projection_length = np.dot(point_vector, profile_unit_vector.T)  # Scalar projection
+            return projection_length.item()
+
+        model_df['Distance'] = model_df.apply(project_point, axis=1)
+
+        # Sort the points by their distance along the line
+        model_df.sort_values(by='Distance', inplace=True)
+        model_df.reset_index(drop=True, inplace=True)
+
+        fig, ax = plt.subplots(figsize=(16, 8))
+
+        if 'model_depth' not in model_df.columns:
+            if elevation:
+                model_df['model_depth'] = model_df['Z'] - model_df['depth']
+            else:
+                model_df['model_depth'] = model_df['depth']
+
+        first_layer_df = model_df[model_df['layer_number'] == 0].copy()
+        first_layer_df.reset_index(drop=True, inplace=True)
+
+        y_lower_lim = max(model_df['model_depth'].min() * 0.9, model_df['model_depth'].min() - 10)
+        y_upper_lim = min(model_df['model_depth'].max() * 1.1, model_df['model_depth'].max() + 10)
+
+        if limits_depth:
+            y_lower_lim = min(limits_depth)
+            y_upper_lim = max(limits_depth)
+        
+        if limits_rho:
+            vmin, vmax = min(limits_rho), max(limits_rho)
+        else:
+            vmin = model_df['model_values'].min()
+            vmax = model_df['model_values'].max()
 
 
-# %%
+        if mode == 'scatter':
+            sc = ax.scatter(
+                model_df['Distance'], model_df['model_depth'], 
+                c=model_df['model_values'], cmap='viridis', s=100, 
+                label='Resistivity', marker='s', 
+                vmin=vmin, vmax=vmax)
+            _ = fig.colorbar(sc, ax=ax, label=unit_label)
+
+        elif mode == 'bar':
+            if elevation:
+                bar_bottom = first_layer_df['Z'].copy().values
+                ax.plot(first_layer_df['Distance'], bar_bottom, c='k', zorder=0, linewidth=0.8)
+            else:
+                bar_bottom = np.zeros_like(np.arange(len(subset)), dtype='float64')
+
+            norm = mcolor.Normalize(vmin=vmin, vmax=vmax)
+            cmap = matplotlib.colormaps['viridis']
+
+            for _, layer_df in model_df.groupby('layer_number'):
+                if elevation:
+                    bar_bottom -= layer_df['thickness'].values
+                color = cmap(norm(layer_df['model_values'].values))
+                ax.bar(layer_df['Distance'], layer_df['thickness'], 2, bottom=bar_bottom, color=color)
+                if not elevation:
+                    bar_bottom += layer_df['thickness'].values
+            
+            _ = fig.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax, label=unit_label)
+        else:
+            raise ValueError(f'"{mode}" is an invalid input. Must be from {modes_list}')
+
+        for j in range(len(first_layer_df)):
+            name = first_layer_df['Name'][j]
+            x_val = first_layer_df['Distance'][j]
+            y_val = y_upper_lim if elevation else 0
+            ax.text(
+                x_val, y_val, name, 
+                fontsize=10, color="black", 
+                ha='center', va="bottom")
+
+        ax.set_xlabel("Horizontal Distance (m)")
+        ax.set_ylabel("Depth (m)")
+        ax.set_ylim((y_lower_lim, y_upper_lim))
+        ax.set_title(f'Model of {unit_title}', fontweight='bold', fontsize=16, pad = 15.0)
+        if not elevation:
+            ax.set_ylim((0, y_upper_lim))
+            ax.invert_yaxis()
+
+        if profile_name is None:
+            title = f'with soundings:\n{subset}'
+        else:
+            title = f'"{profile_name}"'
+
+        fig.suptitle(f'2D-section of the profile {title}', fontweight='bold', fontsize=20)
+        fig.tight_layout()
+
+        fig.show()
+
+        target_dir = self.folder_structure.get('profiles')
+        time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        name = profile_name if profile_name else 'profile'
+        with_elevation = '_elevation' if elevation else ''
+        if fname or fname is None:
+            file_name = f'{name}_{time}_{mode}{with_elevation}.png' if fname is None else fname
+            fig.savefig(target_dir / file_name)
