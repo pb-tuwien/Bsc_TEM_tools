@@ -1001,7 +1001,7 @@ class SurveyTEM(SurveyBase):
                        colormap = None,
                        filter_times=(7, 700),
                        verbose: bool = True,
-                       fname: Union[str, bool] = None) -> None:
+                       fname: Union[str, bool] = None):
 
         plot_list = [point for point in self.data_preprocessed.keys() if subset is None or point in subset]
 
@@ -1430,10 +1430,10 @@ class SurveyTEM(SurveyBase):
     def lambda_analysis_comparison(self, sounding: str,
                                    layers,
                                    max_depth: float,
-                                   test_range:tuple=(10, 10000, 30),
                                    layer_type:str = 'linear',
                                    filter_times=(7, 700),
                                    noise_floor: float = 0.025,
+                                   test_range:tuple=(10, 10000, 30),
                                    normalize: bool = True,
                                    fname: Union[str, bool] = None):
         fig = self.l_curve_plot(sounding=sounding, layers=layers, max_depth=max_depth, noise_floor=noise_floor,
@@ -1704,3 +1704,75 @@ class SurveyTEM(SurveyBase):
         if fname or fname is None:
             file_name = f'opt_{sounding}_{time}_{unit}.png' if fname is None else fname
             fig.savefig(target_dir / file_name)
+
+    def plot_2d_section(self,
+                       subset: list,
+                       line_points: Optional[tuple] = None,
+                       lam: Optional[Union[int, float, list]] = None,
+                       search_mode: str = 'gradient',
+                       layer_type: str = 'linear',
+                       layers: Union[int, float, dict, np.ndarray] = 4.5,
+                       max_depth: Union[float, int] = None,
+                       start_model: np.ndarray = None,
+                       noise_floor: Union[float, int] = 0.025,
+                       unit: str = 'rhoa',
+                       scale: str = 'lin', # TODO maybe
+                       elevation: bool = True,
+                       mode: str = 'bar',
+                       limits_depth: Optional[tuple] = None,
+                       limits_rho: Optional[tuple] = None,
+                       filter_times=(7, 700),
+                       test_range:tuple=(10, 10000, 30),
+                       normalize: bool = True,
+                       fname: Union[str, bool] = None
+                       ):
+        
+        modes_list = ['scatter', 'bar']
+        search_list = ['gradient', 'spline', 'golden']
+
+        if isinstance(lam, list) and len(lam) != len(subset):
+            raise ValueError('Could not match lambdas to the soundings')
+
+        for i, sounding in enumerate(subset):
+            if isinstance(lam, list):
+                chosen_lambda = lam[i]
+            elif lam is None:
+                if search_mode == 'gradient':
+                    chosen_lambda = self.analyse_inversion_gradient_curvature(
+                        sounding=sounding, layers=layers, max_depth=max_depth, shared_mode=True,
+                        test_range=test_range, layer_type=layer_type, filter_times=filter_times, noise_floor=noise_floor,
+                        fname=False, normalize=normalize
+                    )
+                
+                elif search_mode == 'spline':
+                    chosen_lambda = self.analyse_inversion_cubic_spline_curvature(
+                        sounding=sounding, layers=layers, max_depth=max_depth, shared_mode=True,
+                        test_range=test_range, layer_type=layer_type, filter_times=filter_times, noise_floor=noise_floor,
+                        fname=False, normalize=normalize
+                    )
+
+                elif search_mode == 'golden':
+                    chosen_lambda = self.analyse_inversion_golden_section(
+                        sounding=sounding, layers=layers, max_depth=max_depth, shared_mode=True,
+                        test_range=(test_range[0], test_range[1]), layer_type=layer_type, noise_floor=noise_floor,
+                        filter_times=filter_times, fname=False, normalize=normalize
+                    )
+                else:
+                    raise KeyError(f'Invalid input for search mode: {search_mode}. Must be from {search_list}.')
+            else:
+                chosen_lambda = lam
+            
+            chosen_lambda = float(chosen_lambda)
+            self.data_inversion(subset=[sounding], lam=chosen_lambda, layer_type=layer_type, layers=layers,
+                                max_depth=max_depth, filter_times=filter_times,
+                                start_model=start_model, noise_floor=noise_floor,
+                                verbose=False)
+            
+            inv_name = f'{chosen_lambda}_{filter_times[0]}_{filter_times[1]}_{noise_floor}'
+            inverted_data = self.data_inverted.get(sounding, {}).get(inv_name)
+            raw_data = self.data_preprocessed.get(sounding)
+
+            raw_metadata = raw_data.get('metadata')
+
+
+# %%

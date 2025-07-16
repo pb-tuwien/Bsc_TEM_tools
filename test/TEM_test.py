@@ -3,7 +3,7 @@
 import TEM_tools as te
 import numpy as np
 
-#%% Test Survey
+# Test Survey
 
 # tem_data = 'test/test_data/test_data.tem'
 # tem_coords = 'test/test_data/test_coords.csv'
