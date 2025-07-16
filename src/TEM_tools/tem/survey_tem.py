@@ -617,8 +617,10 @@ class SurveyTEM(SurveyBase):
                 self.logger.warning(f'Invalid subset keys: {invalid_subset}')
         
         if isinstance(lam, list):
-            lambda_list = lam
-        elif isinstance(lam, (float, int)):
+            lambda_list = [float(value) for value in lam]
+        elif isinstance(lam, int):
+            lambda_list = [float(lam)]
+        elif isinstance(lam, float):
             lambda_list = [lam]
 
         self.data_filter(filter_times=filter_times, noise_floor=noise_floor, subset=subset)
@@ -876,11 +878,6 @@ class SurveyTEM(SurveyBase):
             file_name = f'raw_filtered_{time}_{filter_times[0]}_{filter_times[1]}_{unit}.png' if fname is None else fname
             fig.savefig(target_dir / file_name)
 
-
-
-
-
-
     def _plot_one_inversion(self, sounding,
                            lam: Union[int, float] = 600,
                            filter_times: Tuple[Union[float, int], Union[float, int]] = (7, 700),
@@ -895,7 +892,7 @@ class SurveyTEM(SurveyBase):
                            colormap = None,
                            fname: Union[str, bool] = None) -> None:
 
-        inv_name = f'{lam}_{filter_times[0]}_{filter_times[1]}_{noise_floor}'
+        inv_name = f'{float(lam)}_{filter_times[0]}_{filter_times[1]}_{noise_floor}'
         filter_name = f'{filter_times[0]}_{filter_times[1]}_{noise_floor}'
         inverted_data = self.data_inverted.get(sounding, {}).get(inv_name)
         filtered_data = self.data_filtered.get(sounding, {}).get(filter_name)
@@ -1054,17 +1051,17 @@ class SurveyTEM(SurveyBase):
                        noise_floor: float):
 
         if self.data_inverted is not None:
-            inversion_dict = self.data_inverted.get(sounding, {}).get(f'{lam}_{filter_times[0]}_{filter_times[1]}_{noise_floor}')
+            inversion_dict = self.data_inverted.get(sounding, {}).get(f'{float(lam)}_{filter_times[0]}_{filter_times[1]}_{noise_floor}')
             if inversion_dict is None:
                 self.data_inversion(subset=[sounding], lam=lam, layer_type=layer_type, layers=layers,
                                     verbose=False, max_depth=max_depth, filter_times=filter_times,
                                     noise_floor=noise_floor, start_model=None)
-                inversion_dict = self.data_inverted.get(sounding, {}).get(f'{lam}_{filter_times[0]}_{filter_times[1]}_{noise_floor}')
+                inversion_dict = self.data_inverted.get(sounding, {}).get(f'{float(lam)}_{filter_times[0]}_{filter_times[1]}_{noise_floor}')
         else:
             self.data_inversion(subset=[sounding], lam=lam, layer_type=layer_type, layers=layers,
                                 verbose=False, max_depth=max_depth, filter_times=filter_times,
                                 noise_floor=noise_floor, start_model=None)
-            inversion_dict = self.data_inverted.get(sounding, {}).get(f'{lam}_{filter_times[0]}_{filter_times[1]}_{noise_floor}')
+            inversion_dict = self.data_inverted.get(sounding, {}).get(f'{float(lam)}_{filter_times[0]}_{filter_times[1]}_{noise_floor}')
 
         rms_value = inversion_dict.get('metadata').get('absrms')
         roughness_value = inversion_dict.get('metadata').get('phi_model')
@@ -1503,7 +1500,7 @@ class SurveyTEM(SurveyBase):
                             verbose=False, max_depth=max_depth, filter_times=filter_times,
                             noise_floor=noise_floor, start_model=None)
         for i, lam in enumerate(lambda_values):
-            inv_name = f'{lam}_{filter_times[0]}_{filter_times[1]}_{noise_floor}'
+            inv_name = f'{float(lam)}_{filter_times[0]}_{filter_times[1]}_{noise_floor}'
             filter_name = f'{filter_times[0]}_{filter_times[1]}_{noise_floor}'
             inverted_data = self.data_inverted.get(sounding, {}).get(inv_name)
             filtered = self.data_filtered.get(sounding, {}).get(filter_name)
@@ -1599,7 +1596,7 @@ class SurveyTEM(SurveyBase):
         rms_values = inv_points.T[1]
         lambda_values = np.array(lambda_values)
 
-        inv_name = f'{lam}_{filter_times[0]}_{filter_times[1]}_{noise_floor}'
+        inv_name = f'{float(lam)}_{filter_times[0]}_{filter_times[1]}_{noise_floor}'
         filter_name = f'{filter_times[0]}_{filter_times[1]}_{noise_floor}'
         inverted_data = self.data_inverted.get(sounding, {}).get(inv_name)
         filtered_data = self.data_filtered.get(sounding, {}).get(filter_name)
@@ -1676,7 +1673,7 @@ class SurveyTEM(SurveyBase):
             )
 
         ax[3].plot(roughness_values, rms_values, 'o', label='L-Curve')
-        ax[3].plot(roughness, abs_rms, 's', label=f'Optimal Lambda: {lam}')
+        ax[3].plot(roughness, abs_rms, 's', label=f'Optimal Lambda: {lam:.3f}')
         for i in np.arange(len(lambda_values)):
             ax[3].annotate(f'{lambda_values[i]:.0f}', (roughness_values[i], rms_values[i]), fontsize=8, ha='right',
                         textcoords="offset points", xytext=(10, 10))
@@ -1686,7 +1683,7 @@ class SurveyTEM(SurveyBase):
         ax[3].yaxis.set_label_position("right")
         ax[3].grid(True, which="both", alpha=.3)
         ax[3].set_title('L-Curve', fontsize=18, pad=12)
-        ax[3].legend(loc='lower left')
+        ax[3].legend(loc='upper right', bbox_to_anchor=(0.99, 0.88))
 
         label_list = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
         for axis, label in zip(ax, label_list):

@@ -1262,8 +1262,15 @@ def plot_model(
         title_default = 'Resistivity'
     
     ax.plot(param, dpth, **kwargs)
+
     if not ax.yaxis_inverted():
         ax.invert_yaxis()
+
+    if xlimits is not None:
+        ax.set_xlim(xlimits)
+    if ylimits is not None:
+        ylimits = (max(ylimits), min(ylimits))
+        ax.set_ylim(ylimits)
         
     ax.set_ylabel('Depth (m)')
     ax.set_xlabel(xlabel)
@@ -1274,9 +1281,5 @@ def plot_model(
 
     ax.grid(True, which="both", alpha=.3)
     
-    if xlimits is not None:
-        ax.set_xlim(xlimits)
-    if ylimits is not None:
-        ax.set_ylim(ylimits)
     
     return ax
