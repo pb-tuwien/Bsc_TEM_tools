@@ -1185,11 +1185,13 @@ class SurveyTEM(SurveyBase):
         ax[0].set_ylabel(r'$\partial B_z/\partial t$ (V/m²)', fontsize=16)
         ax[0].grid(True, which="both", alpha=.3)
 
+        ax[1].loglog(filtered_data['Time'], resp_sgnl, '-k', label='inversion', zorder=3)
         ax[1].plot(filtered_data['Time'], response_unit, '-k', label='inversion', zorder=3)
         ax[1].plot(filtered_data['Time'], obs_unit, marker='v', label='observed', zorder=2) #color=self.col,
         ax[1].set_xlabel('time (s)', fontsize=16)
         ax[1].set_ylabel(unit_label_ax, fontsize=16)
-        ax[1].set_xscale('log')
+        # ax[1].set_xscale('log')
+        ax[1].set_ylim(1,1000)
         ax[1].yaxis.tick_right()
         ax[1].yaxis.set_label_position("right")
         ax[1].grid(True, which="both", alpha=.3)
