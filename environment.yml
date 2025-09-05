@@ -9,5 +9,5 @@ dependencies:
     - ipython = 8.28.0
     - obspy = 1.4.1  
     - pandas = 2.2.3
-    - pyyaml
+    - ipywidgets
     - pyproj

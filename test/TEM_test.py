@@ -1,9 +1,9 @@
 #%% Import class
 
-import TEM_tools.tem.survey_tem as st
+import TEM_tools as te
 import numpy as np
 
-#%% Test Survey
+# Test Survey
 
 # tem_data = 'test/test_data/test_data.tem'
 # tem_coords = 'test/test_data/test_coords.csv'
@@ -19,7 +19,7 @@ import numpy as np
 #                         'M43': 'M043', 'M44': 'M044', 'M45': 'M045'}
 parsing_coords = {'EP1': 'Mtest', 'TEM_test': 'Mtest'}
 
-survey = st.SurveyTEM('test/test_dir')
+survey = te.SurveyTEM('./test_dir')
 # survey.coords_read(coords=tem_coords)
 # survey.coords_rename_points(rename_dict=rename_points)
 # survey.coords_sort_points()
@@ -29,39 +29,7 @@ survey = st.SurveyTEM('test/test_dir')
 survey.coords_read()
 survey.data_read()
 survey.data_preprocess(parsing_dict=parsing_coords)
-# survey.analyse_inversion_gradient_curvature(sounding='M024',
-#                              layer_type='dict',
-#                              layers={0:1, 5:1.5, 15:2},
-#                              max_depth=30,
-#                              test_range=(10, 1000, 20),
-#                              filter_times=(8, 80))
-# survey.analyse_inversion_golden_section(sounding='M024',
-#                                         layer_type='dict',
-#                                         layers={0:1, 5:1.5, 15:2},
-#                                         max_depth=30,
-#                                         test_range=(100, 400),
-#                                         filter_times=(8, 80))
-# _ = survey.l_curve_plot(sounding='M024',
-#                     layer_type='dict',
-#                     layers={0:1, 5:1.5, 15:2},
-#                     max_depth=30,
-#                     test_range=(10, 1000, 20),
-#                     filter_times=(8, 80))
 
-# survey.optimised_inversion_plot(sounding='M024',
-#                                 layer_type='dict',
-#                                 layers={0:1, 5:1.5, 15:2},
-#                                 max_depth=30,
-#                                 test_range=(10, 1000, 20),
-#                                 filter_times=(8, 80),
-#                                 lam=234,
-#                                 fname=False)
+# survey.plot_inversion(subset=['M024'], max_depth=30, fname=False , lam=300)
+survey.plot_2d_section(lam=60, subset=['M025', 'M026', 'M027'], max_depth=20)
 
-survey.plot_inversion(subset=['M024'], max_depth=30, fname=False)
-
-# survey.lambda_analysis_comparison(sounding='M011',
-#                              layer_type='dict',
-#                              layers={0:1, 5:1.5, 15:2},
-#                              max_depth=30,
-#                              test_range=(10, 1000, 20),
-#                              filter_times=(8, 150), fname=False)
